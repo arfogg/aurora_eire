@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 def aurora_over_ireland():
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 15))
     
     ax = create_map_of_ireland(ax)
 

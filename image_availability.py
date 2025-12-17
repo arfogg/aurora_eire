@@ -53,5 +53,47 @@ def county_bar_chart():
                            "county_availability_bar_" + dt.datetime.now().strftime("%Y_%m_%d") + ".png")
 
     fig.savefig(figname)
+    
+def map_availability():
+    
+    # Read in County Borders
+    gdf = read_data.read_county_borders()
+    
+    # Derry is missing "None" value
+    gdf.NAME_EN[30] = "County Derry"
+    
+    # Read in Photo collection data
+    data, counties, n_photos = read_data.read_summary_admin_actions()
+    
+    gdf_count_list = np.full(len(gdf), np.nan)
+    for i in range(len(gdf)):
+        gdf_string = gdf.NAME_EN[i]
+        data_i, = np.where(counties == gdf_string[7:])
+        gdf_count_list[i] = n_photos[data_i]
+    # gdf.boundary.plot(figsize=(8, 10), color='black', linewidth=1.5)
+    # plt.title("County Boundaries of Ireland")
+    # plt.show()   
 
-  
+    gdf['color_index'] = gdf_count_list
+    # create a numeric column for coloring
+    #gdf["color_index"] = range(len(gdf))
+    
+    fig, ax = plt.subplots(figsize=(8, 10))
+    
+    gdf.plot(
+        column="color_index",      # assign colors by index
+        cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
+        legend=True,              # turn on if you want a legend
+        ax=ax,
+        edgecolor="black",         # draw borders
+        linewidth=0.3
+    )
+    
+    ax.set_title("n photos per county")
+    ax.set_axis_off()
+    
+    #fig.colorbar(s, ax=ax)
+    
+    plt.show()
+    
+    # NEED TO GO THROUGH AND EYEBALL THE COUNTY OUTLINES TO MAKE SURE THEY LOOK OK
