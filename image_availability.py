@@ -6,6 +6,7 @@ Created on Mon Nov 17 12:00:45 2025
 """
 
 import os
+import string
 import numpy as np
 import datetime as dt
 
@@ -13,7 +14,6 @@ import matplotlib.pyplot as plt
 
 import read_data
 
-fontsize = 10
 
 county_names = np.array(["Antrim", "Armagh", "Carlow", "Cavan", "Clare",
                          "Cork", "Derry", "Donegal", "Down", "Dublin",
@@ -26,6 +26,21 @@ county_names = np.array(["Antrim", "Armagh", "Carlow", "Cavan", "Clare",
 
 fig_dir = os.path.join("C:"+os.sep,
                        r"Users\Alexandra\Documents\figures\aurora_eire")
+
+# Set up fontsizes
+fontsize = 20
+plt.rcParams['font.size'] = fontsize
+plt.rcParams['axes.titlesize'] = fontsize
+plt.rcParams['axes.labelsize'] = fontsize
+plt.rcParams['xtick.labelsize'] = fontsize
+plt.rcParams['ytick.labelsize'] = fontsize
+plt.rcParams['legend.fontsize'] = fontsize
+
+alphabet = list(string.ascii_lowercase)
+axes_labels = []
+for a in alphabet:
+    axes_labels.append('(' + a + ')')
+
 
 def county_bar_chart():
 
@@ -53,85 +68,81 @@ def county_bar_chart():
                            "county_availability_bar_" + dt.datetime.now().strftime("%Y_%m_%d") + ".png")
 
     fig.savefig(figname)
-    
+
+
 def map_availability():
-    
+
     # Read in County Borders
     gdf = read_data.read_county_borders()
-    
     # Derry is missing "None" value
     gdf.NAME_EN[30] = "County Derry"
-    
+
     # Read in Photo collection data
     data, counties, n_photos = read_data.read_summary_admin_actions()
-    
+
     # Read in Population data
     pop_df = read_data.combined_pop()
-    
+
+    # Initialise empty arrays for photo and population data
     gdf_count_list = np.full(len(gdf), np.nan)
     gdf_pop_list = np.full(len(gdf), np.nan)
+    # Find the corresponding rows so the photo/pop data can go into the gdf
     for i in range(len(gdf)):
         gdf_string = gdf.NAME_EN[i]
-
+        # Photo numbers
         data_i, = np.where(counties == gdf_string[7:])
         gdf_count_list[i] = n_photos[data_i]
-        
-        pop_i, = np.where(pop_df['County'] == gdf_string[7:])  
+        # Population stats
+        pop_i, = np.where(pop_df['County'] == gdf_string[7:])
         gdf_pop_list[i] = pop_df['Population'].iloc[pop_i]
 
-    # gdf.boundary.plot(figsize=(8, 10), color='black', linewidth=1.5)
-    # plt.title("County Boundaries of Ireland")
-    # plt.show()   
-
+    # Add in photo and population columns to gdf object
     gdf['n_photos'] = gdf_count_list
     gdf['population'] = gdf_pop_list
-    gdf['n_photos_normpop'] = gdf_count_list / gdf_pop_list
+    gdf['n_photos_normpop'] = (gdf_count_list / gdf_pop_list) * 100.
 
-    # create a numeric column for coloring
-    #gdf["color_index"] = range(len(gdf))
-    
+    # Initialise figure
     fig, ax = plt.subplots(ncols=3, figsize=(24, 10))
 
-    # Pure photo counts    
-    gdf.plot(
-        column="n_photos",      # assign colors by index
-        cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
-        legend=True,              # turn on if you want a legend
-        ax=ax[0],
-        edgecolor="black",         # draw borders
-        linewidth=0.3
-    )
-    
-    ax[0].set_title("n photos per county")
-    ax[0].set_axis_off()
+    # Pure photo counts
+    gdf.plot(column="n_photos",
+             legend=True,
+             ax=ax[0],
+             cmap="summer", edgecolor="black",             
+             linewidth=0.4,
+             legend_kwds={"label": "Number of Photos (counts)",
+                          "orientation": "horizontal",
+                          "pad": 0.01})
 
     # Population
-    gdf.plot(
-        column="population",      # assign colors by index
-        cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
-        legend=True,              # turn on if you want a legend
-        ax=ax[1],
-        edgecolor="black",         # draw borders
-        linewidth=0.3
-    )
-    ax[1].set_title("Population")
-    ax[1].set_axis_off()
-    
-    # Normalised photo counts
-    gdf.plot(
-        column="n_photos_normpop",      # assign colors by index
-        cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
-        legend=True,              # turn on if you want a legend
-        ax=ax[2],
-        edgecolor="black",         # draw borders
-        linewidth=0.3
-    )
-    ax[2].set_title("n photos / population")
-    ax[2].set_axis_off()        
-    
+    gdf.plot(column="population",
+             legend=True,
+             ax=ax[1],
+             cmap="viridis", edgecolor="black",
+             linewidth=0.4,
+             legend_kwds={"label": "Population (counts)",
+                          "orientation": "horizontal",
+                          "pad": 0.01})
 
-    #fig.colorbar(s, ax=ax)
-    
-    plt.show()
-    
+    # Normalised photo counts
+    gdf.plot(column="n_photos_normpop",
+             legend=True,
+             ax=ax[2],
+             cmap="Wistia_r", edgecolor="black",
+             linewidth=0.4,
+             legend_kwds={"label": "Number of Photos Normalised by Population (%)",
+                          "orientation": "horizontal",
+                          "pad": 0.01})
+
+    # Formatting bits
+    for (i, a) in enumerate(ax):
+        t = a.text(0.07, 0.93, axes_labels[i], transform=a.transAxes,
+                    fontsize=fontsize*1.5, va='top', ha='left')
+        t.set_bbox(dict(facecolor='white', alpha=0.75, edgecolor='grey'))
+        a.set_axis_off()
+
+    fig.tight_layout()
+    # plt.show()
+
+    # do one with a dot for every geo location given
     # NEED TO GO THROUGH AND EYEBALL THE COUNTY OUTLINES TO MAKE SURE THEY LOOK OK
