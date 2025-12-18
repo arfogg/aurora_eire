@@ -4,6 +4,9 @@
 [![Stars](https://img.shields.io/github/stars/arfogg/aurora_eire?style=social&color=%23FFB31A)](#)
 [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](https://www.python.org/)
 
+
+![image](aurora_eire_logo.png)
+
 **Work in progress**
 
 This package is code to read and analyse data from the Aurora Éire citizen science project. The project is described in full [here](https://www.dias.ie/cosmicphysics/astrophysics/aurora-eire/).
