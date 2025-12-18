@@ -4,16 +4,9 @@
 [![Stars](https://img.shields.io/github/stars/arfogg/aurora_eire?style=social&color=%23FFB31A)](#)
 [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](https://www.python.org/)
 
-
-<div style="text-align: center;">
-  <img src="aurora_eire_logo.png" width="400" alt="Centered image" style="display: block; margin: 0 auto;">
-</div>
-
 <p align="center">
-<img src="aurora_eire_logo.png" width="400">
+<img src="aurora_eire_logo.png" width="=200">
 </p>
-
-
 
 **Work in progress**
 
