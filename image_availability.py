@@ -65,33 +65,71 @@ def map_availability():
     # Read in Photo collection data
     data, counties, n_photos = read_data.read_summary_admin_actions()
     
+    # Read in Population data
+    pop_df = read_data.combined_pop()
+    
     gdf_count_list = np.full(len(gdf), np.nan)
+    gdf_pop_list = np.full(len(gdf), np.nan)
     for i in range(len(gdf)):
         gdf_string = gdf.NAME_EN[i]
+
         data_i, = np.where(counties == gdf_string[7:])
         gdf_count_list[i] = n_photos[data_i]
+        
+        pop_i, = np.where(pop_df['County'] == gdf_string[7:])  
+        gdf_pop_list[i] = pop_df['Population'].iloc[pop_i]
+
     # gdf.boundary.plot(figsize=(8, 10), color='black', linewidth=1.5)
     # plt.title("County Boundaries of Ireland")
     # plt.show()   
 
-    gdf['color_index'] = gdf_count_list
+    gdf['n_photos'] = gdf_count_list
+    gdf['population'] = gdf_pop_list
+    gdf['n_photos_normpop'] = gdf_count_list / gdf_pop_list
+
     # create a numeric column for coloring
     #gdf["color_index"] = range(len(gdf))
     
-    fig, ax = plt.subplots(figsize=(8, 10))
-    
+    fig, ax = plt.subplots(ncols=3, figsize=(24, 10))
+
+    # Pure photo counts    
     gdf.plot(
-        column="color_index",      # assign colors by index
+        column="n_photos",      # assign colors by index
         cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
         legend=True,              # turn on if you want a legend
-        ax=ax,
+        ax=ax[0],
         edgecolor="black",         # draw borders
         linewidth=0.3
     )
     
-    ax.set_title("n photos per county")
-    ax.set_axis_off()
+    ax[0].set_title("n photos per county")
+    ax[0].set_axis_off()
+
+    # Population
+    gdf.plot(
+        column="population",      # assign colors by index
+        cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
+        legend=True,              # turn on if you want a legend
+        ax=ax[1],
+        edgecolor="black",         # draw borders
+        linewidth=0.3
+    )
+    ax[1].set_title("Population")
+    ax[1].set_axis_off()
     
+    # Normalised photo counts
+    gdf.plot(
+        column="n_photos_normpop",      # assign colors by index
+        cmap="plasma",              # or try: Set3, tab10, Paired, Pastel1
+        legend=True,              # turn on if you want a legend
+        ax=ax[2],
+        edgecolor="black",         # draw borders
+        linewidth=0.3
+    )
+    ax[2].set_title("n photos / population")
+    ax[2].set_axis_off()        
+    
+
     #fig.colorbar(s, ax=ax)
     
     plt.show()
