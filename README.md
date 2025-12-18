@@ -8,9 +8,10 @@
 <div style="text-align: center;">
   <img src="aurora_eire_logo.png" width="400" alt="Centered image" style="display: block; margin: 0 auto;">
 </div>
-<img src="aurora_eire_logo.png" width="400">
-![image](aurora_eire_logo.png)
 
+<p align="center">
+<img src="aurora_eire_logo.png" width="400">
+</p>
 
 
 
