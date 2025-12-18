@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](https://www.python.org/)
 
 <p align="center">
-<img src="aurora_eire_logo.png" width="=200">
+<img src="aurora_eire_logo.png" width="200">
 </p>
 
 **Work in progress**
