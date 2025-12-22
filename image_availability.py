@@ -47,7 +47,7 @@ def county_bar_chart():
     data, counties, n_photos = read_data.read_summary_admin_actions()
 
     missing_counties = np.array(list(set(county_names) - set(counties)))
-    
+
     for c in missing_counties:
         counties = np.append(counties, c)
         n_photos = np.append(n_photos, 0)
@@ -65,8 +65,8 @@ def county_bar_chart():
     fig.tight_layout()
 
     figname = os.path.join(fig_dir,
-                           "county_availability_bar_" + dt.datetime.now().strftime("%Y_%m_%d") + ".png")
-
+                           "county_availability_bar_"
+                           + dt.datetime.now().strftime("%Y_%m_%d") + ".png")
     fig.savefig(figname)
 
 
@@ -99,50 +99,74 @@ def map_availability():
     # Add in photo and population columns to gdf object
     gdf['n_photos'] = gdf_count_list
     gdf['population'] = gdf_pop_list
-    gdf['n_photos_normpop'] = (gdf_count_list / gdf_pop_list) * 100.
+    # Sums to 1
+    gdf['population_frac'] = gdf['population'] / np.sum(gdf['population'])
+    # Sums to 100
+    gdf['population_percent'] = (gdf['population'] /
+                                 np.sum(gdf['population'])) * 100.
+    gdf['n_photos_normpop'] = (gdf_count_list / gdf_pop_list)
+    gdf['n_photos_normpoppc'] = gdf_count_list / gdf['population_percent']
 
     # Initialise figure
-    fig, ax = plt.subplots(ncols=3, figsize=(24, 10))
+    fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(16, 16))
 
     # Pure photo counts
     gdf.plot(column="n_photos",
              legend=True,
-             ax=ax[0],
-             cmap="summer", edgecolor="black",             
+             ax=ax[0, 0],
+             cmap="summer", edgecolor="black",
              linewidth=0.4,
              legend_kwds={"label": "Number of Photos (counts)",
+                          "orientation": "horizontal",
+                          "pad": 0.01})
+
+    # Normalised photo counts
+    gdf.plot(column="n_photos_normpoppc",
+             legend=True,
+             ax=ax[0, 1],
+             cmap="Wistia_r", edgecolor="black",
+             linewidth=0.4,
+             legend_kwds={"label":
+                          "Number of Photos Normalised by % Population",
                           "orientation": "horizontal",
                           "pad": 0.01})
 
     # Population
     gdf.plot(column="population",
              legend=True,
-             ax=ax[1],
-             cmap="viridis", edgecolor="black",
+             ax=ax[1, 0],
+             cmap="viridis", edgecolor="lightgrey",
              linewidth=0.4,
              legend_kwds={"label": "Population (counts)",
                           "orientation": "horizontal",
                           "pad": 0.01})
 
-    # Normalised photo counts
-    gdf.plot(column="n_photos_normpop",
+    # Population
+    gdf.plot(column="population_percent",
              legend=True,
-             ax=ax[2],
-             cmap="Wistia_r", edgecolor="black",
+             ax=ax[1, 1],
+             cmap="viridis", edgecolor="lightgrey",
              linewidth=0.4,
-             legend_kwds={"label": "Number of Photos Normalised by Population (%)",
+             legend_kwds={"label": "Population (%)",
                           "orientation": "horizontal",
                           "pad": 0.01})
 
     # Formatting bits
-    for (i, a) in enumerate(ax):
-        t = a.text(0.07, 0.93, axes_labels[i], transform=a.transAxes,
-                    fontsize=fontsize*1.5, va='top', ha='left')
+    j = 0
+    for (i, a) in np.ndenumerate(ax):
+        print(i, a)
+        t = a.text(0.07, 0.93, axes_labels[j], transform=a.transAxes,
+                   fontsize=fontsize*1.5, va='top', ha='left')
         t.set_bbox(dict(facecolor='white', alpha=0.75, edgecolor='grey'))
         a.set_axis_off()
+        j = j + 1
 
     fig.tight_layout()
-    # plt.show()
+
+    fig_name = os.path.join(fig_dir, "raw_county_availability_map_"
+                            + dt.datetime.now().strftime("%Y_%m_%d") + ".png")
+    fig.savefig(fig_name)
 
     # do one with a dot for every geo location given
     # NEED TO GO THROUGH AND EYEBALL THE COUNTY OUTLINES TO MAKE SURE THEY LOOK OK
+    
