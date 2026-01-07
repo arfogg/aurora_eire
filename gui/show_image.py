@@ -97,6 +97,10 @@ class ImageViewer(QWidget):
         # Start up the ImageWindow, pass it the path for image 0
         self.image_label = ImageWindow(self.image_paths[self.index])
 
+        # Create gui label for image counter
+        self.image_title = QLabel()
+        self.image_title.setAlignment(Qt.AlignCenter)
+
         # Create a Next button
         self.next_button = QPushButton("Next")
         # Clicked is the signal we get from next_button
@@ -112,6 +116,7 @@ class ImageViewer(QWidget):
         # Stack the widget vertically with image on top, button underneath
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
+        layout.addWidget(self.image_title)
         layout.addWidget(self.next_button)
         layout.addWidget(self.previous_button)
 
@@ -121,10 +126,15 @@ class ImageViewer(QWidget):
         # Window title
         self.setWindowTitle("Resizable Image Viewer")
         # Initial window size
-        self.resize(600, 600)
+        self.resize(700, 700)
 
-        self.update_buttons()
+        self.image_change_updates()
 
+
+    def update_image_title(self):
+        current = self.index + 1 # Going from 1 -> len
+        total = len(self.image_paths)
+        self.image_title.setText(f"Image {current} / {total}\n" + "ADD FILENAME HERE")
     # def next_image(self):
     #     # Function that steps through to next image
     #     # Add 1 to the image and wrap around at the end
@@ -140,7 +150,7 @@ class ImageViewer(QWidget):
         if self.index < len(self.image_paths) - 1:
             self.index += 1
             self.image_label.set_image(self.image_paths[self.index])
-            self.update_buttons()
+            self.image_change_updates()
 
 
     # def previous_image(self):
@@ -153,11 +163,15 @@ class ImageViewer(QWidget):
         if self.index > 0:
             self.index -= 1
             self.image_label.set_image(self.image_paths[self.index])
-            self.update_buttons()
+            self.image_change_updates()
         
     def update_buttons(self):
         self.previous_button.setEnabled(self.index > 0)
         self.next_button.setEnabled(self.index < len(self.image_paths) - 1)
+
+    def image_change_updates(self):
+        self.update_buttons()
+        self.update_image_title()
 
 def list_images():
 
