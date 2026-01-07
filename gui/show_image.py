@@ -9,11 +9,14 @@ import os
 import sys
 import pathlib
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
-                               QVBoxLayout, QWidget)
+                               QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
 from auroral_image_class import AuroralImage
+
+sys.path.append(r'C:\Users\Alexandra\Documents\wind_waves_akr_code\aurora_eire')
+from read_data import read_summary_admin_actions
 
 
 image_dir = os.path.join(
@@ -31,6 +34,12 @@ class ImageWindow(QLabel):
 
         # Set the Alignment of the image
         self.setAlignment(Qt.AlignCenter)
+
+        # Allow image to grow
+        self.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Expanding
+            )
 
         # Create empty pixmap variable
         self.pixmap_original = None
@@ -90,7 +99,7 @@ class ImageViewer(QWidget):
 
         # Store the image paths into the class
         self.images = images
-    
+
         # Store number of images
         self.n_images = len(self.images)
 
@@ -104,6 +113,13 @@ class ImageViewer(QWidget):
         self.image_title = QLabel()
         self.image_title.setAlignment(Qt.AlignCenter)
 
+        # Initialise widget for displaying metadata
+        self.metadata_label = QLabel()
+        # Stop centering
+        self.metadata_label.setAlignment(Qt.AlignTop)
+        # Wraps long text around
+        self.metadata_label.setWordWrap(True)
+
         # Create a Next button
         self.next_button = QPushButton("Next")
         # Clicked is the signal we get from next_button
@@ -116,15 +132,36 @@ class ImageViewer(QWidget):
         # next_image is a method that runs when we click
         self.previous_button.clicked.connect(self.previous_image)
 
-        # Stack the widget vertically with image on top, button underneath
-        layout = QVBoxLayout()
-        layout.addWidget(self.image_label)
-        layout.addWidget(self.image_title)
-        layout.addWidget(self.next_button)
-        layout.addWidget(self.previous_button)
+        # Main horizontal layout
+        main_layout = QHBoxLayout()
+        
+        # Left-hand side: image + title + buttons
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(self.image_label)
+        left_layout.addWidget(self.image_title)
+        left_layout.addWidget(self.previous_button)
+        left_layout.addWidget(self.next_button)
+        
+        # Right-hand side: metadata
+        right_layout = QVBoxLayout()
+        right_layout.addWidget(QLabel("Metadata"))  # header
+        right_layout.addWidget(self.metadata_label)
+        
+        main_layout.addLayout(left_layout, stretch=3)
+        main_layout.addLayout(right_layout, stretch=1)
+        
+        self.setLayout(main_layout)
 
-        # Apply the layout
-        self.setLayout(layout)
+
+        # # Stack the widget vertically with image on top, button underneath
+        # layout = QVBoxLayout()
+        # layout.addWidget(self.image_label)
+        # layout.addWidget(self.image_title)
+        # layout.addWidget(self.next_button)
+        # layout.addWidget(self.previous_button)
+
+        # # Apply the layout
+        # self.setLayout(layout)
 
         # Window title
         self.setWindowTitle("Aurora Éire Image Viewer")
@@ -133,6 +170,19 @@ class ImageViewer(QWidget):
 
         # Update buttons, title, etc
         self.image_change_updates()
+
+    def update_metadata(self):
+        image = self.images[self.index]
+
+        text = (
+            f"Record ID: {image.record_id}\n"
+            f"Filename: {image.filename}\n"
+            f"Extension: {image.file_extension}\n"
+            "\n(Metadata placeholder)"
+        )
+    
+        self.metadata_label.setText(text)
+
 
     def update_image_title(self):
         """
@@ -201,6 +251,7 @@ class ImageViewer(QWidget):
         """
         self.update_buttons()
         self.update_image_title()
+        self.update_metadata()
 
 
 def list_images():
