@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
-from auroral_image_class import Auroral_Image
+from auroral_image_class import AuroralImage
 
 
 image_dir = os.path.join(
@@ -21,26 +21,54 @@ image_dir = os.path.join(
 
 
 class ImageWindow(QLabel):
-
+    """
+    Class for an Image Window. Based on a QLabel class which provides a text
+    or image display.
+    """
     def __init__(self, image_path=None):
+        # Initialise the Qt machinery
         super().__init__()
 
+        # Set the Alignment of the image
         self.setAlignment(Qt.AlignCenter)
+
+        # Create empty pixmap variable
         self.pixmap_original = None
 
+        # Set image_path if on first image (otherwise it's set/changed later)
         if image_path is not None:
             self.set_image(image_path)
 
     def set_image(self, image_path):
-        """Load a new image and display it."""
+        """
+        Load a new image and display it.
+        """
+        # Fill in pixmap_original with a QPixmap made from the image in the
+        # filepath. Docs says a QPixmap is an "off-screen image representation
+        # that can be used as a paint device"
+        # Load the image once, at full resolution
         self.pixmap_original = QPixmap(image_path)
+        # Scale image to current widget size and display
         self._update_pixmap()
 
     def resizeEvent(self, event):
+        """
+        Rescales the image following window resize events.
+
+        Parameters
+        ----------
+        event : TYPE
+            DESCRIPTION.
+
+        """
+        # Resize image if window size is changed
         self._update_pixmap()
         super().resizeEvent(event)
 
     def _update_pixmap(self):
+        """
+        Scale the original pixmap to the current widget size and display it.
+        """
         if self.pixmap_original and not self.pixmap_original.isNull():
             scaled = self.pixmap_original.scaled(
                 self.size(),
@@ -55,19 +83,22 @@ class ImageViewer(QWidget):
     # it contains other widgets
     # manages the "application state" i.e. which image we're on
     # responds to user actions (buttons)
-    def __init__(self, image_paths):
+    def __init__(self, images):
 
         # Initialise the Qt machinery
         super().__init__()
 
         # Store the image paths into the class
-        self.image_paths = image_paths
+        self.images = images
+    
+        # Store number of images
+        self.n_images = len(self.images)
 
         # Initialise tracker for which image we are on
         self.index = 0
 
         # Start up the ImageWindow, pass it the path for image 0
-        self.image_label = ImageWindow(self.image_paths[self.index])
+        self.image_label = ImageWindow(self.images[self.index].filepath)
 
         # Create gui label for image counter
         self.image_title = QLabel()
@@ -112,10 +143,12 @@ class ImageViewer(QWidget):
         None.
 
         """
-        current = self.index + 1  # Going from 1 -> len
-        total = len(self.image_paths)
-        self.image_title.setText(f"Image {current} / {total}\n"
-                                 + "ADD FILENAME HERE")
+        current = self.index + 1  # Going from 1 -> n_images
+        total = self.n_images
+        self.image_title.setText(
+            f"Image {current} / {total}\n"
+            + f"Filename: {self.images[self.index].filename}\n"
+            + f"Record ID: {self.images[self.index].record_id}")
 
     def next_image(self):
         """
@@ -126,9 +159,9 @@ class ImageViewer(QWidget):
         None.
 
         """
-        if self.index < len(self.image_paths) - 1:
+        if self.index < (self.n_images - 1):
             self.index += 1
-            self.image_label.set_image(self.image_paths[self.index])
+            self.image_label.set_image(self.images[self.index].filepath)
             self.image_change_updates()
 
     def previous_image(self):
@@ -142,7 +175,7 @@ class ImageViewer(QWidget):
         """
         if self.index > 0:
             self.index -= 1
-            self.image_label.set_image(self.image_paths[self.index])
+            self.image_label.set_image(self.images[self.index].filepath)
             self.image_change_updates()
 
     def update_buttons(self):
@@ -155,7 +188,7 @@ class ImageViewer(QWidget):
 
         """
         self.previous_button.setEnabled(self.index > 0)
-        self.next_button.setEnabled(self.index < len(self.image_paths) - 1)
+        self.next_button.setEnabled(self.index < (self.n_images - 1))
 
     def image_change_updates(self):
         """
@@ -174,15 +207,21 @@ def list_images():
 
     # NEEDS TO BE MORE GENERAL FOR ALL FILETYPES
     # Automatically list PNG and JPEG images in the directory
-    image_paths = sorted([
+    image_files = sorted([
         str(p) for p in pathlib.Path(image_dir).glob("*")
         if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
     ])
 
-    if not image_paths:
+    if not image_files:
         raise ValueError(f"No images found in {image_dir}")
 
-    return image_paths
+    images = []
+    for i, path in enumerate(image_files):
+        images.append(
+            AuroralImage(filepath=str(path), image_n=i)
+        )
+
+    return images
 
 
 def main():
