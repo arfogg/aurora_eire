@@ -7,7 +7,7 @@ Created on Tue Jan  6 15:28:30 2026
 
 import os
 
-class submitted_image():
+class Auroral_Image():
     """
     A class containing the information for an individual photo.
     """
@@ -21,4 +21,3 @@ class submitted_image():
 
         # Store the unique number describing this image
         self.record_id = record_id
-
