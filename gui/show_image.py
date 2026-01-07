@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt
 from auroral_image_class import AuroralImage
 
 sys.path.append(r'C:\Users\Alexandra\Documents\wind_waves_akr_code\aurora_eire')
-from read_data import read_summary_admin_actions
+from read_data import read_user_input_data
 
 
 image_dir = os.path.join(
@@ -256,6 +256,8 @@ class ImageViewer(QWidget):
 
 def list_images():
 
+    user_data_df = read_user_input_data()
+    
     # NEEDS TO BE MORE GENERAL FOR ALL FILETYPES
     # Automatically list PNG and JPEG images in the directory
     image_files = sorted([
@@ -268,6 +270,10 @@ def list_images():
 
     images = []
     for i, path in enumerate(image_files):
+        print(i)
+        img = AuroralImage(filepath=str(path), image_n=i)
+        img.attach_user_data(user_data_df)
+
         images.append(
             AuroralImage(filepath=str(path), image_n=i)
         )
@@ -276,12 +282,15 @@ def list_images():
 
 
 def main():
+    
 
-    image_paths = list_images()
+    images = list_images()
+    
+
 
     app = QApplication(sys.argv)
 
-    viewer = ImageViewer(image_paths)
+    viewer = ImageViewer(images)
     viewer.show()
 
     sys.exit(app.exec())

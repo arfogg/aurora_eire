@@ -20,21 +20,29 @@ data_dir = os.path.join("C:"+os.sep,
 
 
 def read_summary_admin_actions():
-    
-    json_f = os.path.join(data_dir, "admin_actions.json")
-    
 
+    json_f = os.path.join(data_dir, "admin_actions.json")
 
     with open(json_f) as f:
         data = json.load(f)
 
     # Sort per county data
-    d_sorted = dict(sorted(data['counties'].items(), key=lambda x: x[1], reverse=True))
+    d_sorted = dict(sorted(data['counties'].items(),
+                           key=lambda x: x[1], reverse=True))
 
     counties = np.array(list(d_sorted.keys()))
     n_photos = np.array(list(d_sorted.values()))
 
     return data, counties, n_photos
+
+
+def read_user_input_data():
+
+    csv_f = os.path.join(data_dir, "photos_data_2026-01-07.csv")
+
+    user_data_df = pd.read_csv(csv_f)
+
+    return user_data_df
 
 def read_county_borders():
     
