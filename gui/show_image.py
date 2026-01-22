@@ -9,7 +9,8 @@ import os
 import sys
 import pathlib
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
-                               QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
+                               QVBoxLayout, QWidget, QHBoxLayout,
+                               QSizePolicy, QCheckBox)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
@@ -113,12 +114,32 @@ class ImageViewer(QWidget):
         self.image_title = QLabel()
         self.image_title.setAlignment(Qt.AlignCenter)
 
-        # Initialise widget for displaying metadata
+        # # Initialise widget for displaying metadata
+        # self.metadata_label = QLabel()
+        # # Stop centering
+        # self.metadata_label.setAlignment(Qt.AlignTop)
+        # # Wraps long text around
+        # self.metadata_label.setWordWrap(True)
+
+        # Metadata panel container
+        self.metadata_panel = QWidget()
+        self.metadata_layout = QVBoxLayout(self.metadata_panel)
+        
+        # Metadata title
+        self.metadata_title = QLabel("Image Metadata")
+        self.metadata_title.setAlignment(Qt.AlignLeft)
+        self.metadata_title.setStyleSheet("font-weight: bold;")
+        
+        # Metadata content
         self.metadata_label = QLabel()
-        # Stop centering
         self.metadata_label.setAlignment(Qt.AlignTop)
-        # Wraps long text around
         self.metadata_label.setWordWrap(True)
+        
+        self.metadata_layout.addWidget(self.metadata_title)
+        self.metadata_layout.addWidget(self.metadata_label)
+        self.metadata_layout.addStretch()
+
+        
 
         # Create a Next button
         self.next_button = QPushButton("Next")
@@ -132,8 +153,8 @@ class ImageViewer(QWidget):
         # next_image is a method that runs when we click
         self.previous_button.clicked.connect(self.previous_image)
 
-        # Main horizontal layout
-        main_layout = QHBoxLayout()
+        # # Main horizontal layout
+        # main_layout = QHBoxLayout()
         
         # Left-hand side: image + title + buttons
         left_layout = QVBoxLayout()
@@ -142,16 +163,171 @@ class ImageViewer(QWidget):
         left_layout.addWidget(self.previous_button)
         left_layout.addWidget(self.next_button)
         
-        # Right-hand side: metadata
-        right_layout = QVBoxLayout()
-        right_layout.addWidget(QLabel("Metadata"))  # header
-        right_layout.addWidget(self.metadata_label)
+        # # Right-hand side: metadata
+        # right_layout = QVBoxLayout()
+        # # right_layout.addWidget(QLabel("Metadata"))  # header
+        # # right_layout.addWidget(self.metadata_label)
+        # right_layout.addWidget(self.metadata_panel)
+        
+        # Initialise Right Hand Panel
+        self.right_panel = QWidget()
+        self.right_layout = QVBoxLayout(self.right_panel)
+        # Add title
+        self.right_title = QLabel(
+            "Aurora Éire Image review\nMay = 10th-14th May 2024\nOct = 10th-14th Oct 2024")
+        self.right_title.setAlignment(Qt.AlignCenter)
+        self.right_title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.right_layout.addWidget(self.right_title)
+
+        # Initialise metadata place
+        self.metadata_row = QWidget()
+        self.metadata_row_layout = QHBoxLayout(self.metadata_row)
+        self.image_metadata_panel = QWidget()
+        self.image_metadata_layout = QVBoxLayout(self.image_metadata_panel)
+        
+        self.image_metadata_title = QLabel("Image metadata")
+        self.image_metadata_title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        
+        self.image_metadata_layout.addWidget(self.image_metadata_title)
+        self.image_metadata_layout.addWidget(self.metadata_label)
+        self.image_metadata_layout.addStretch()
+
+        
+        # User inputs place
+        # self.user_metadata_panel = QWidget()
+        # self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
+
+        # self.user_metadata_title = QLabel("User inputs")
+        # self.user_metadata_title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        
+        # self.user_metadata_layout.addWidget(self.user_metadata_title)
+        # self.user_metadata_layout.addStretch()
+        self.user_metadata_panel = QWidget()
+        self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
+        
+        self.user_metadata_title = QLabel("User metadata")
+        self.user_metadata_title.setStyleSheet("font-weight: bold;")
+        
+        self.user_metadata_label = QLabel()
+        self.user_metadata_label.setAlignment(Qt.AlignTop)
+        self.user_metadata_label.setWordWrap(True)
+        
+        self.user_metadata_layout.addWidget(self.user_metadata_title)
+        self.user_metadata_layout.addWidget(self.user_metadata_label)
+        self.user_metadata_layout.addStretch()
+        
+
+        self.metadata_row_layout.addWidget(self.image_metadata_panel)
+        self.metadata_row_layout.addWidget(self.user_metadata_panel)
+        
+        self.right_layout.addWidget(self.metadata_row)
+        self.annotations_panel = QWidget()
+        self.annotations_layout = QVBoxLayout(self.annotations_panel)
+        
+        # self.annotations_title = QLabel("Annotations")
+        # self.annotations_title.setStyleSheet("font-weight: bold;")
+
+        
+        # PRACTICAL QUESTIONS
+        self.practical_title = QLabel("Practical questions")
+        self.practical_title.setStyleSheet("font-weight: bold;")
+
+        self.annotations_layout.addWidget(self.practical_title)
+
+        # Is it the night sky
+        self.is_night_sky_checkbox = QCheckBox("Is this an image of the night sky?")
+        self.is_night_sky_checkbox.stateChanged.connect(
+            self.is_night_sky_changed
+            )
+        self.annotations_layout.addWidget(self.is_night_sky_checkbox)    
+
+        # Compare the metadata and user date/time. Do they match (to the minute)?
+
+
+        # Based on the modified vs capture time, did the user edit the photo?
+        self.is_modified_checkbox = QCheckBox("Based on the modified vs capture time, did the user edit the photo?")
+        self.is_modified_checkbox.stateChanged.connect(
+            self.is_modified
+            )
+        self.annotations_layout.addWidget(self.is_modified_checkbox)    
+
+
+        # Is the input datetime during either storm?
+        self.is_during_storm_checkbox = QCheckBox("Is the datetime during either storm?")
+        self.is_during_storm_checkbox.stateChanged.connect(
+            self.is_during_storm
+            )
+        self.annotations_layout.addWidget(self.is_during_storm_checkbox)    
+
+        # Based on the dates, did the user select the correct storm?
+        self.is_correct_storm_checkbox = QCheckBox("Based on the dates, did the user select the correct storm?")
+        self.is_correct_storm_checkbox.stateChanged.connect(
+            self.is_correct_storm
+            )
+        self.annotations_layout.addWidget(self.is_correct_storm_checkbox)    
+
+        # Will we need to crop this (i.e. to remove someone's face, or if it's a screenshot, crop around the image)
+        self.needs_crop_checkbox = QCheckBox("Will we need to crop this image? (e.g. to remove someone's face, or if it's a screenshot, crop around the image)")
+        self.needs_crop_checkbox.stateChanged.connect(
+            self.needs_crop
+            )
+        self.annotations_layout.addWidget(self.needs_crop_checkbox)    
+
+        # Do we need a follow up discussion on this image        
+        self.follow_up_checkbox = QCheckBox("Does this image require follow up discussion")
+        self.follow_up_checkbox.stateChanged.connect(
+            self.follow_up
+            )
+        self.annotations_layout.addWidget(self.follow_up_checkbox)    
+        
+                
+        
+        
+                
+        self.scientific_title = QLabel("Scientific notes")
+        self.scientific_title.setStyleSheet("font-weight: bold;")
+        
+        self.annotations_layout.addSpacing(10)
+        
+        self.annotations_layout.addWidget(self.scientific_title)  
+        
+                
+        # Can we see aurora?
+        self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
+        self.aurora_present_checkbox.stateChanged.connect(
+            self.aurora_present
+            )
+        self.annotations_layout.addWidget(self.aurora_present_checkbox)    
+
+        # Is it faint/bright?
+        # What colours can we see? (green/red/pink/purple/...?)
+        # Sky state: clear/some cloud/lots of cloud
+        # What shapes of aurora can we see (according to the herlingshaw guide)
+                
+        
+        
+        
+        
+        
+        self.annotations_layout.addStretch()
+        
+        # self.annotations_layout.addWidget(self.annotations_title)
+        # self.annotations_layout.addStretch()
+        
+        self.right_layout.addWidget(self.annotations_panel, stretch=1)
+
+        
+        # main_layout.addLayout(left_layout, stretch=3)
+        # main_layout.addLayout(right_layout, stretch=1)
+        
+        # self.setLayout(main_layout)
+
+        main_layout = QHBoxLayout()
         
         main_layout.addLayout(left_layout, stretch=3)
-        main_layout.addLayout(right_layout, stretch=1)
+        main_layout.addWidget(self.right_panel, stretch=2)
         
         self.setLayout(main_layout)
-
 
         # # Stack the widget vertically with image on top, button underneath
         # layout = QVBoxLayout()
@@ -171,17 +347,126 @@ class ImageViewer(QWidget):
         # Update buttons, title, etc
         self.image_change_updates()
 
+
+
+
+    def aurora_present(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="scientific",
+            key="aurora_present",
+            value=value
+        )
+
+
+    def is_modified(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="practical",
+            key="is_modified",
+            value=value
+        )
+
+    def needs_crop(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="practical",
+            key="needs_crop",
+            value=value
+        )
+
+
+    def is_correct_storm(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="practical",
+            key="is_correct_storm",
+            value=value
+        )
+
+    def is_during_storm(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="practical",
+            key="is_during_storm",
+            value=value
+        )
+    def is_night_sky_changed(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="practical",
+            key="is_night_sky",
+            value=value
+        )
+
+    def follow_up(self, state):
+        image = self.images[self.index]
+        value = (state == Qt.Checked)
+    
+        image.set_annotation(
+            section="practical",
+            key="follow_up",
+            value=value
+        )
+
+
+    def update_annotations(self):
+        image = self.images[self.index]
+    
+        value = image.get_annotation(
+            "practical",
+            "is_night_sky",
+            default=False
+        )
+    
+        self.is_night_sky_checkbox.blockSignals(True)
+        self.is_night_sky_checkbox.setChecked(value)
+        self.is_night_sky_checkbox.blockSignals(False)
+
+
     def update_metadata(self):
         image = self.images[self.index]
 
+        fc = self.images[self.index].file_created
+        fm = self.images[self.index].file_modified
+        ex = self.images[self.index].exif_datetime
+
         text = (
-            f"Record ID: {image.record_id}\n"
-            f"Filename: {image.filename}\n"
-            f"Extension: {image.file_extension}\n"
-            "\n(Metadata placeholder)"
+            # f"Record ID: {image.record_id}\n"
+            f"File created: {fc}\n"
+            f"File modified: {fm}\n"
+            f"EXIF time: {ex}\n"
+            f"File size: {image.file_size_in_bytes} bytes\n"  
+        )
+
+        self.metadata_label.setText(text)
+
+    def update_userinput(self):
+        image = self.images[self.index]
+
+        text = (
+            f"Date: {image.capture_date}\n"
+            f"Time: {image.capture_time}\n"
+            f"Time provided?: {image.time_provided}\n"
+            f"Storm: {image.storm_name}\n"
+            f"User says edited: {image.edited}\n"
+            "\n"
+            f"User comment: {image.user_comment}\n"
         )
     
-        self.metadata_label.setText(text)
+        self.user_metadata_label.setText(text)
 
 
     def update_image_title(self):
@@ -252,6 +537,8 @@ class ImageViewer(QWidget):
         self.update_buttons()
         self.update_image_title()
         self.update_metadata()
+        self.update_userinput()
+        self.update_annotations()
 
 
 def list_images():
@@ -270,13 +557,13 @@ def list_images():
 
     images = []
     for i, path in enumerate(image_files):
-        print(i)
         img = AuroralImage(filepath=str(path), image_n=i)
         img.attach_user_data(user_data_df)
 
-        images.append(
-            AuroralImage(filepath=str(path), image_n=i)
-        )
+        images.append(img)
+        # images.append(
+        #     AuroralImage(filepath=str(path), image_n=i)
+        # )
 
     return images
 
