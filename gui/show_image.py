@@ -12,7 +12,8 @@ from functools import partial
 
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
                                QVBoxLayout, QWidget, QHBoxLayout,
-                               QSizePolicy, QCheckBox)
+                               QSizePolicy, QCheckBox, QRadioButton,
+                               QButtonGroup)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
@@ -285,8 +286,30 @@ class ImageViewer(QWidget):
         self.annotations_layout.addWidget(self.aurora_present_checkbox)    
 
         # Is it faint/bright?
+        self.brightness_button = self.add_radio_group(
+            layout=self.annotations_layout,
+            title="How bright are the Aurorae in this image?",
+            options=["Faint", "Moderate", "Bright"],
+            on_change=lambda value: self.annotation_radio_changed(
+                section="scientific",
+                key="aurora_brightness",
+                value=value.lower()
+            )
+        )
+
         # What colours can we see? (green/red/pink/purple/...?)
+
         # Sky state: clear/some cloud/lots of cloud
+        self.cloud_button = self.add_radio_group(
+            layout=self.annotations_layout,
+            title="How much cloud cover is there?",
+            options=["No clouds", "Some cloud cover", "Completely clouded"],
+            on_change=lambda value: self.annotation_radio_changed(
+                section="scientific",
+                key="cloud_cover",
+                value=value.lower()
+            )
+        )
         # What shapes of aurora can we see (according to the herlingshaw guide)
                 
         
@@ -313,6 +336,56 @@ class ImageViewer(QWidget):
         # Update buttons, title, etc
         self.image_change_updates()
 
+    def annotation_radio_changed(self, section, key, value):
+        image = self.images[self.index]
+        image.set_annotation(section=section, key=key, value=value)
+
+    def set_radio_group_value(self, group, value):
+        for button in group.buttons():
+            button.blockSignals(True)
+            button.setChecked(button.text().lower() == value)
+            button.blockSignals(False)
+
+    def add_radio_group(self, layout, title, options, on_change=None):
+        """
+        Create a titled radio-button group and add it to a layout.
+    
+        Parameters
+        ----------
+        layout : QLayout
+            Layout to add widgets to.
+        title : str
+            Title shown above the radio buttons.
+        options : list[str]
+            List of option labels.
+        on_change : callable, optional
+            Function called with selected text when selection changes.
+    
+        Returns
+        -------
+        QButtonGroup
+        """
+        # Title label
+        title_label = QLabel(title)
+        title_label.setStyleSheet("font-weight: bold;")
+        layout.addWidget(title_label)
+    
+        # Button group
+        group = QButtonGroup(self)
+    
+        for opt in options:
+            button = QRadioButton(opt)
+            group.addButton(button)
+            layout.addWidget(button)
+    
+        if on_change is not None:
+            group.buttonClicked.connect(
+                lambda btn: on_change(btn.text())
+            )
+    
+        return group
+
+
 
     def annotation_checkbox_changed(self, section, key, state):
         image = self.images[self.index]
@@ -325,90 +398,66 @@ class ImageViewer(QWidget):
         )
 
 
-    # def aurora_present(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="scientific",
-    #         key="aurora_present",
-    #         value=value
-    #     )
-
-
-    # def is_modified(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="practical",
-    #         key="is_modified",
-    #         value=value
-    #     )
-
-    # def needs_crop(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="practical",
-    #         key="needs_crop",
-    #         value=value
-    #     )
-
-
-    # def is_correct_storm(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="practical",
-    #         key="is_correct_storm",
-    #         value=value
-    #     )
-
-    # def is_during_storm(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="practical",
-    #         key="is_during_storm",
-    #         value=value
-    #     )
-    # def is_night_sky_changed(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="practical",
-    #         key="is_night_sky",
-    #         value=value
-    #     )
-
-    # def follow_up(self, state):
-    #     image = self.images[self.index]
-    #     value = (state == Qt.Checked)
-    
-    #     image.set_annotation(
-    #         section="practical",
-    #         key="follow_up",
-    #         value=value
-    #     )
-
+    def set_checkbox(self, checkbox, value):
+        checkbox.blockSignals(True)
+        checkbox.setChecked(bool(value))
+        checkbox.blockSignals(False)
 
     def update_annotations(self):
         image = self.images[self.index]
     
-        value = image.get_annotation(
-            "practical",
-            "is_night_sky",
-            default=False
-        )
+        # value = image.get_annotation(
+        #     "practical",
+        #     "is_night_sky",
+        #     default=False
+        # )
     
-        self.is_night_sky_checkbox.blockSignals(True)
-        self.is_night_sky_checkbox.setChecked(value)
-        self.is_night_sky_checkbox.blockSignals(False)
+        # self.is_night_sky_checkbox.blockSignals(True)
+        # self.is_night_sky_checkbox.setChecked(value)
+        # self.is_night_sky_checkbox.blockSignals(False)
+
+        # Practical annotations
+        # Checkboxes
+        for cb in ["is_night_sky", "is_modified", "is_during_storm",
+                   "is_correct_storm", "needs_crop", "follow_up",
+                   "setting_correct"]:
+            self.set_checkbox(
+                self.is_night_sky_checkbox,
+                image.get_annotation("practical", cb, False)
+            )
+
+
+        # Scientific annotations
+        # Checkboxes
+        for cb in ["aurora_present"]:
+            self.set_checkbox(
+                self.is_night_sky_checkbox,
+                image.get_annotation("scientific", cb, False)
+            )
+
+
+        brightness = image.get_annotation(
+            "scientific",
+            "aurora_brightness",
+            default=None
+        )
+        
+        self.set_radio_group_value(self.brightness_button, brightness)
+
+
+        cloudy = image.get_annotation(
+            "scientific",
+            "cloud_cover",
+            default=None
+        )
+        
+        self.set_radio_group_value(self.cloud_button, cloudy)
+
+
+
+
+
+
 
 
     def update_metadata(self):
