@@ -116,26 +116,11 @@ class ImageViewer(QWidget):
         # Create gui label for image counter
         self.image_title = QLabel()
         self.image_title.setAlignment(Qt.AlignCenter)
-
-        # # Metadata panel container
-        # self.metadata_panel = QWidget()
-        # self.metadata_layout = QVBoxLayout(self.metadata_panel)
-        
-        # # Metadata title
-        # self.metadata_title = QLabel("Image MetadataBANANA")
-        # self.metadata_title.setAlignment(Qt.AlignLeft)
-        # self.metadata_title.setStyleSheet("font-weight: bold;")
-        
+ 
         # Metadata content
         self.metadata_label = QLabel()
         self.metadata_label.setAlignment(Qt.AlignTop)
         self.metadata_label.setWordWrap(True)
-        
-        # self.metadata_layout.addWidget(self.metadata_title)
-        # self.metadata_layout.addWidget(self.metadata_label)
-        # self.metadata_layout.addStretch()
-
-        
 
         # Create a Next button
         self.next_button = QPushButton("Next")
@@ -148,10 +133,7 @@ class ImageViewer(QWidget):
         # Clicked is the signal we get from next_button
         # next_image is a method that runs when we click
         self.previous_button.clicked.connect(self.previous_image)
-
-        # # Main horizontal layout
-        # main_layout = QHBoxLayout()
-        
+  
         # Left-hand side: image + title + buttons
         left_layout = QVBoxLayout()
         left_layout.addWidget(self.image_label)
@@ -184,7 +166,6 @@ class ImageViewer(QWidget):
         self.image_metadata_layout.addWidget(self.metadata_label)
         self.image_metadata_layout.addStretch()
 
-        
         # User inputs place
         self.user_metadata_panel = QWidget()
         self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
@@ -334,21 +315,16 @@ class ImageViewer(QWidget):
         )   
              
         # Any other artifacts present? stars / moon / light pollution / ground level object (tree/car/animal)
-        self.aurora_shapes = self.add_multiselect_checkboxes(
+        self.artifacts = self.add_multiselect_checkboxes(
             layout=self.annotations_layout,
-            title="Are there any other artifacts present? [select none-multiple]",
+            title="Are there any other artifacts partially blocking the aurora? [select none-multiple]",
             options=["None", "Stars", "Moon", "Light Pollution",
                      "Ground object (tree/car/animal)"],
             section="scientific",
-            key="aurora_shapes",
+            key="artifacts",
             columns=4
         )   
 
-
-
-
-
-        
         self.annotations_layout.addStretch()
 
         self.right_layout.addWidget(self.annotations_panel, stretch=1)
@@ -409,7 +385,6 @@ class ImageViewer(QWidget):
         Create a titled group of checkboxes arranged in a grid (wrapping).
         """
         title_label = QLabel(title)
-        #title_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(title_label)
     
         grid = QGridLayout()
@@ -435,43 +410,6 @@ class ImageViewer(QWidget):
         layout.addLayout(grid)
     
         return checkboxes
-
-    
-    # def add_multiselect_checkboxes(
-    #     self,
-    #     layout,
-    #     title,
-    #     options,
-    #     section,
-    #     key
-    # ):
-    #     """
-    #     Create a titled group of checkboxes where multiple selections are allowed.
-    #     Stores a list of selected values.
-    #     """
-    #     title_label = QLabel(title)
-    #     #title_label.setStyleSheet("font-weight: bold;")
-    #     layout.addWidget(title_label)
-    
-    #     checkbox_layout = QHBoxLayout()    
-    
-    #     checkboxes = {}
-    
-    #     for opt in options:
-    #         cb = QCheckBox(opt)
-    
-    #         cb.stateChanged.connect(
-    #             lambda state, o=opt: self.multiselect_changed(
-    #                 section, key, o, state
-    #             )
-    #         )
-    
-    #         checkbox_layout.addWidget(cb)
-    #         checkboxes[opt.lower()] = cb
-    #     layout.addLayout(checkbox_layout)
-    #     return checkboxes
-
-
 
     def annotation_radio_changed(self, section, key, value):
         image = self.images[self.index]
@@ -546,16 +484,6 @@ class ImageViewer(QWidget):
 
     def update_annotations(self):
         image = self.images[self.index]
-    
-        # value = image.get_annotation(
-        #     "practical",
-        #     "is_night_sky",
-        #     default=False
-        # )
-    
-        # self.is_night_sky_checkbox.blockSignals(True)
-        # self.is_night_sky_checkbox.setChecked(value)
-        # self.is_night_sky_checkbox.blockSignals(False)
 
         # Practical annotations
         # Checkboxes
@@ -602,19 +530,21 @@ class ImageViewer(QWidget):
         )
         self.set_multiselect(self.aurora_colours, colours)
         
-        # Auroral Colours
+        # Auroral shapes
         shapes = image.get_annotation(
             "scientific",
             "aurora_shapes",
             default=set()
         )
         self.set_multiselect(self.aurora_shapes, shapes)        
-
-
-
-
-
-
+        
+        # Artifacts
+        arfs = image.get_annotation(
+            "scientific",
+            "artifacts",
+            default=set()
+        )
+        self.set_multiselect(self.artifacts, arfs)        
 
     def update_metadata(self):
         image = self.images[self.index]
@@ -638,12 +568,8 @@ class ImageViewer(QWidget):
 
         text = (
             f"Date: {image.capture_date} | Time: {image.capture_time}\n"
-            #f"Time: {image.capture_time}\n"
             f"Storm: {image.storm_name} | Time provided?: {image.time_provided}\n"
-            #f"Storm: {image.storm_name}\n"
             f"Setting: {image.setting} | Edited: {image.edited}\n"
-            #f"User says edited: {image.edited}\n"
-            #"\n"
             f"User comment: {image.user_comment}\n"
         )
     
