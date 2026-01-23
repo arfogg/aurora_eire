@@ -8,6 +8,8 @@ Created on Tue Jan  6 15:01:55 2026
 import os
 import sys
 import pathlib
+from functools import partial
+
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
                                QVBoxLayout, QWidget, QHBoxLayout,
                                QSizePolicy, QCheckBox)
@@ -236,9 +238,12 @@ class ImageViewer(QWidget):
 
         # Is it the night sky
         self.is_night_sky_checkbox = QCheckBox("Is this an image of the night sky?")
+        # self.is_night_sky_checkbox.stateChanged.connect(
+        #     self.is_night_sky_changed
+        #     )
         self.is_night_sky_checkbox.stateChanged.connect(
-            self.is_night_sky_changed
-            )
+            partial(self.annotation_checkbox_changed, "practical", "is_night_sky")
+        )
         self.annotations_layout.addWidget(self.is_night_sky_checkbox)    
 
         # Compare the metadata and user date/time. Do they match (to the minute)?
@@ -246,39 +251,61 @@ class ImageViewer(QWidget):
 
         # Based on the modified vs capture time, did the user edit the photo?
         self.is_modified_checkbox = QCheckBox("Based on the modified vs capture time, did the user edit the photo?")
+        # self.is_modified_checkbox.stateChanged.connect(
+        #     self.is_modified
+        #     )
         self.is_modified_checkbox.stateChanged.connect(
-            self.is_modified
-            )
+            partial(self.annotation_checkbox_changed, "practical", "is_modified")
+        )
         self.annotations_layout.addWidget(self.is_modified_checkbox)    
 
 
         # Is the input datetime during either storm?
         self.is_during_storm_checkbox = QCheckBox("Is the datetime during either storm?")
+        # self.is_during_storm_checkbox.stateChanged.connect(
+        #     self.is_during_storm
+        #     )
         self.is_during_storm_checkbox.stateChanged.connect(
-            self.is_during_storm
-            )
+            partial(self.annotation_checkbox_changed, "practical", "is_during_storm")
+        )
         self.annotations_layout.addWidget(self.is_during_storm_checkbox)    
 
         # Based on the dates, did the user select the correct storm?
         self.is_correct_storm_checkbox = QCheckBox("Based on the dates, did the user select the correct storm?")
+        # self.is_correct_storm_checkbox.stateChanged.connect(
+        #     self.is_correct_storm
+        #     )
         self.is_correct_storm_checkbox.stateChanged.connect(
-            self.is_correct_storm
-            )
+            partial(self.annotation_checkbox_changed, "practical", "is_correct_storm")
+        )
         self.annotations_layout.addWidget(self.is_correct_storm_checkbox)    
 
         # Will we need to crop this (i.e. to remove someone's face, or if it's a screenshot, crop around the image)
         self.needs_crop_checkbox = QCheckBox("Will we need to crop this image? (e.g. to remove someone's face, or if it's a screenshot, crop around the image)")
+        # self.needs_crop_checkbox.stateChanged.connect(
+        #     self.needs_crop
+        #     )
         self.needs_crop_checkbox.stateChanged.connect(
-            self.needs_crop
-            )
+            partial(self.annotation_checkbox_changed, "practical", "needs_crop")
+        )
         self.annotations_layout.addWidget(self.needs_crop_checkbox)    
 
         # Do we need a follow up discussion on this image        
         self.follow_up_checkbox = QCheckBox("Does this image require follow up discussion")
+        # self.follow_up_checkbox.stateChanged.connect(
+        #     self.follow_up
+        #     )
         self.follow_up_checkbox.stateChanged.connect(
-            self.follow_up
-            )
+            partial(self.annotation_checkbox_changed, "practical", "follow_up")
+        )
         self.annotations_layout.addWidget(self.follow_up_checkbox)    
+        
+        # Do we need a follow up discussion on this image        
+        self.setting_correct = QCheckBox("Does the user-selected setting look correct?")
+        self.setting_correct.stateChanged.connect(
+            partial(self.annotation_checkbox_changed, "practical", "setting_correct")
+        )
+        self.annotations_layout.addWidget(self.setting_correct)    
         
                 
         
@@ -294,9 +321,12 @@ class ImageViewer(QWidget):
                 
         # Can we see aurora?
         self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
+        # self.aurora_present_checkbox.stateChanged.connect(
+        #     self.aurora_present
+        #     )
         self.aurora_present_checkbox.stateChanged.connect(
-            self.aurora_present
-            )
+            partial(self.annotation_checkbox_changed, "scientific", "aurora_present")
+        )
         self.annotations_layout.addWidget(self.aurora_present_checkbox)    
 
         # Is it faint/bright?
@@ -348,78 +378,87 @@ class ImageViewer(QWidget):
         self.image_change_updates()
 
 
-
-
-    def aurora_present(self, state):
+    def annotation_checkbox_changed(self, section, key, state):
         image = self.images[self.index]
         value = (state == Qt.Checked)
     
         image.set_annotation(
-            section="scientific",
-            key="aurora_present",
+            section=section,
+            key=key,
             value=value
         )
 
 
-    def is_modified(self, state):
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
+    # def aurora_present(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
     
-        image.set_annotation(
-            section="practical",
-            key="is_modified",
-            value=value
-        )
-
-    def needs_crop(self, state):
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
-    
-        image.set_annotation(
-            section="practical",
-            key="needs_crop",
-            value=value
-        )
+    #     image.set_annotation(
+    #         section="scientific",
+    #         key="aurora_present",
+    #         value=value
+    #     )
 
 
-    def is_correct_storm(self, state):
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
+    # def is_modified(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
     
-        image.set_annotation(
-            section="practical",
-            key="is_correct_storm",
-            value=value
-        )
+    #     image.set_annotation(
+    #         section="practical",
+    #         key="is_modified",
+    #         value=value
+    #     )
 
-    def is_during_storm(self, state):
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
+    # def needs_crop(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
     
-        image.set_annotation(
-            section="practical",
-            key="is_during_storm",
-            value=value
-        )
-    def is_night_sky_changed(self, state):
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
-    
-        image.set_annotation(
-            section="practical",
-            key="is_night_sky",
-            value=value
-        )
+    #     image.set_annotation(
+    #         section="practical",
+    #         key="needs_crop",
+    #         value=value
+    #     )
 
-    def follow_up(self, state):
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
+
+    # def is_correct_storm(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
     
-        image.set_annotation(
-            section="practical",
-            key="follow_up",
-            value=value
-        )
+    #     image.set_annotation(
+    #         section="practical",
+    #         key="is_correct_storm",
+    #         value=value
+    #     )
+
+    # def is_during_storm(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
+    
+    #     image.set_annotation(
+    #         section="practical",
+    #         key="is_during_storm",
+    #         value=value
+    #     )
+    # def is_night_sky_changed(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
+    
+    #     image.set_annotation(
+    #         section="practical",
+    #         key="is_night_sky",
+    #         value=value
+    #     )
+
+    # def follow_up(self, state):
+    #     image = self.images[self.index]
+    #     value = (state == Qt.Checked)
+    
+    #     image.set_annotation(
+    #         section="practical",
+    #         key="follow_up",
+    #         value=value
+    #     )
 
 
     def update_annotations(self):
@@ -461,6 +500,7 @@ class ImageViewer(QWidget):
             f"Time: {image.capture_time}\n"
             f"Time provided?: {image.time_provided}\n"
             f"Storm: {image.storm_name}\n"
+            f"User says setting: {image.setting}\n"
             f"User says edited: {image.edited}\n"
             "\n"
             f"User comment: {image.user_comment}\n"
