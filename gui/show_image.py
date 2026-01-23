@@ -116,13 +116,6 @@ class ImageViewer(QWidget):
         self.image_title = QLabel()
         self.image_title.setAlignment(Qt.AlignCenter)
 
-        # # Initialise widget for displaying metadata
-        # self.metadata_label = QLabel()
-        # # Stop centering
-        # self.metadata_label.setAlignment(Qt.AlignTop)
-        # # Wraps long text around
-        # self.metadata_label.setWordWrap(True)
-
         # Metadata panel container
         self.metadata_panel = QWidget()
         self.metadata_layout = QVBoxLayout(self.metadata_panel)
@@ -166,11 +159,7 @@ class ImageViewer(QWidget):
         left_layout.addWidget(self.next_button)
         
         # # Right-hand side: metadata
-        # right_layout = QVBoxLayout()
-        # # right_layout.addWidget(QLabel("Metadata"))  # header
-        # # right_layout.addWidget(self.metadata_label)
-        # right_layout.addWidget(self.metadata_panel)
-        
+
         # Initialise Right Hand Panel
         self.right_panel = QWidget()
         self.right_layout = QVBoxLayout(self.right_panel)
@@ -196,14 +185,6 @@ class ImageViewer(QWidget):
 
         
         # User inputs place
-        # self.user_metadata_panel = QWidget()
-        # self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
-
-        # self.user_metadata_title = QLabel("User inputs")
-        # self.user_metadata_title.setStyleSheet("font-weight: bold; font-size: 14px;")
-        
-        # self.user_metadata_layout.addWidget(self.user_metadata_title)
-        # self.user_metadata_layout.addStretch()
         self.user_metadata_panel = QWidget()
         self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
         
@@ -226,9 +207,6 @@ class ImageViewer(QWidget):
         self.annotations_panel = QWidget()
         self.annotations_layout = QVBoxLayout(self.annotations_panel)
         
-        # self.annotations_title = QLabel("Annotations")
-        # self.annotations_title.setStyleSheet("font-weight: bold;")
-
         
         # PRACTICAL QUESTIONS
         self.practical_title = QLabel("Practical questions")
@@ -238,9 +216,6 @@ class ImageViewer(QWidget):
 
         # Is it the night sky
         self.is_night_sky_checkbox = QCheckBox("Is this an image of the night sky?")
-        # self.is_night_sky_checkbox.stateChanged.connect(
-        #     self.is_night_sky_changed
-        #     )
         self.is_night_sky_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "is_night_sky")
         )
@@ -251,9 +226,6 @@ class ImageViewer(QWidget):
 
         # Based on the modified vs capture time, did the user edit the photo?
         self.is_modified_checkbox = QCheckBox("Based on the modified vs capture time, did the user edit the photo?")
-        # self.is_modified_checkbox.stateChanged.connect(
-        #     self.is_modified
-        #     )
         self.is_modified_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "is_modified")
         )
@@ -262,9 +234,6 @@ class ImageViewer(QWidget):
 
         # Is the input datetime during either storm?
         self.is_during_storm_checkbox = QCheckBox("Is the datetime during either storm?")
-        # self.is_during_storm_checkbox.stateChanged.connect(
-        #     self.is_during_storm
-        #     )
         self.is_during_storm_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "is_during_storm")
         )
@@ -272,9 +241,6 @@ class ImageViewer(QWidget):
 
         # Based on the dates, did the user select the correct storm?
         self.is_correct_storm_checkbox = QCheckBox("Based on the dates, did the user select the correct storm?")
-        # self.is_correct_storm_checkbox.stateChanged.connect(
-        #     self.is_correct_storm
-        #     )
         self.is_correct_storm_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "is_correct_storm")
         )
@@ -282,9 +248,6 @@ class ImageViewer(QWidget):
 
         # Will we need to crop this (i.e. to remove someone's face, or if it's a screenshot, crop around the image)
         self.needs_crop_checkbox = QCheckBox("Will we need to crop this image? (e.g. to remove someone's face, or if it's a screenshot, crop around the image)")
-        # self.needs_crop_checkbox.stateChanged.connect(
-        #     self.needs_crop
-        #     )
         self.needs_crop_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "needs_crop")
         )
@@ -292,9 +255,6 @@ class ImageViewer(QWidget):
 
         # Do we need a follow up discussion on this image        
         self.follow_up_checkbox = QCheckBox("Does this image require follow up discussion")
-        # self.follow_up_checkbox.stateChanged.connect(
-        #     self.follow_up
-        #     )
         self.follow_up_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "follow_up")
         )
@@ -313,17 +273,12 @@ class ImageViewer(QWidget):
                 
         self.scientific_title = QLabel("Scientific notes")
         self.scientific_title.setStyleSheet("font-weight: bold;")
-        
         self.annotations_layout.addSpacing(10)
-        
         self.annotations_layout.addWidget(self.scientific_title)  
         
                 
         # Can we see aurora?
         self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
-        # self.aurora_present_checkbox.stateChanged.connect(
-        #     self.aurora_present
-        #     )
         self.aurora_present_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "scientific", "aurora_present")
         )
@@ -340,17 +295,8 @@ class ImageViewer(QWidget):
         
         
         self.annotations_layout.addStretch()
-        
-        # self.annotations_layout.addWidget(self.annotations_title)
-        # self.annotations_layout.addStretch()
-        
-        self.right_layout.addWidget(self.annotations_panel, stretch=1)
 
-        
-        # main_layout.addLayout(left_layout, stretch=3)
-        # main_layout.addLayout(right_layout, stretch=1)
-        
-        # self.setLayout(main_layout)
+        self.right_layout.addWidget(self.annotations_panel, stretch=1)
 
         main_layout = QHBoxLayout()
         
@@ -358,16 +304,6 @@ class ImageViewer(QWidget):
         main_layout.addWidget(self.right_panel, stretch=2)
         
         self.setLayout(main_layout)
-
-        # # Stack the widget vertically with image on top, button underneath
-        # layout = QVBoxLayout()
-        # layout.addWidget(self.image_label)
-        # layout.addWidget(self.image_title)
-        # layout.addWidget(self.next_button)
-        # layout.addWidget(self.previous_button)
-
-        # # Apply the layout
-        # self.setLayout(layout)
 
         # Window title
         self.setWindowTitle("Aurora Éire Image Viewer")
