@@ -13,7 +13,7 @@ from functools import partial
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
                                QVBoxLayout, QWidget, QHBoxLayout,
                                QSizePolicy, QCheckBox, QRadioButton,
-                               QButtonGroup)
+                               QButtonGroup, QGridLayout)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
@@ -117,23 +117,23 @@ class ImageViewer(QWidget):
         self.image_title = QLabel()
         self.image_title.setAlignment(Qt.AlignCenter)
 
-        # Metadata panel container
-        self.metadata_panel = QWidget()
-        self.metadata_layout = QVBoxLayout(self.metadata_panel)
+        # # Metadata panel container
+        # self.metadata_panel = QWidget()
+        # self.metadata_layout = QVBoxLayout(self.metadata_panel)
         
-        # Metadata title
-        self.metadata_title = QLabel("Image Metadata")
-        self.metadata_title.setAlignment(Qt.AlignLeft)
-        self.metadata_title.setStyleSheet("font-weight: bold;")
+        # # Metadata title
+        # self.metadata_title = QLabel("Image MetadataBANANA")
+        # self.metadata_title.setAlignment(Qt.AlignLeft)
+        # self.metadata_title.setStyleSheet("font-weight: bold;")
         
         # Metadata content
         self.metadata_label = QLabel()
         self.metadata_label.setAlignment(Qt.AlignTop)
         self.metadata_label.setWordWrap(True)
         
-        self.metadata_layout.addWidget(self.metadata_title)
-        self.metadata_layout.addWidget(self.metadata_label)
-        self.metadata_layout.addStretch()
+        # self.metadata_layout.addWidget(self.metadata_title)
+        # self.metadata_layout.addWidget(self.metadata_label)
+        # self.metadata_layout.addStretch()
 
         
 
@@ -190,7 +190,7 @@ class ImageViewer(QWidget):
         self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
         
         self.user_metadata_title = QLabel("User metadata")
-        self.user_metadata_title.setStyleSheet("font-weight: bold;")
+        self.user_metadata_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         
         self.user_metadata_label = QLabel()
         self.user_metadata_label.setAlignment(Qt.AlignTop)
@@ -211,7 +211,7 @@ class ImageViewer(QWidget):
         
         # PRACTICAL QUESTIONS
         self.practical_title = QLabel("Practical questions")
-        self.practical_title.setStyleSheet("font-weight: bold;")
+        self.practical_title.setStyleSheet("font-weight: bold; font-size: 14px;")
 
         self.annotations_layout.addWidget(self.practical_title)
 
@@ -223,7 +223,7 @@ class ImageViewer(QWidget):
         self.annotations_layout.addWidget(self.is_night_sky_checkbox)    
 
         # Compare the metadata and user date/time. Do they match (to the minute)?
-
+        # ??? can be done computationally
 
         # Based on the modified vs capture time, did the user edit the photo?
         self.is_modified_checkbox = QCheckBox("Based on the modified vs capture time, did the user edit the photo?")
@@ -273,7 +273,7 @@ class ImageViewer(QWidget):
         
                 
         self.scientific_title = QLabel("Scientific notes")
-        self.scientific_title.setStyleSheet("font-weight: bold;")
+        self.scientific_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         self.annotations_layout.addSpacing(10)
         self.annotations_layout.addWidget(self.scientific_title)  
         
@@ -289,7 +289,7 @@ class ImageViewer(QWidget):
         self.brightness_button = self.add_radio_group(
             layout=self.annotations_layout,
             title="How bright are the Aurorae in this image?",
-            options=["Faint", "Moderate", "Bright"],
+            options=["Faint", "Moderate", "Bright", "No aurora"],
             on_change=lambda value: self.annotation_radio_changed(
                 section="scientific",
                 key="aurora_brightness",
@@ -298,6 +298,15 @@ class ImageViewer(QWidget):
         )
 
         # What colours can we see? (green/red/pink/purple/...?)
+        self.aurora_colours = self.add_multiselect_checkboxes(
+            layout=self.annotations_layout,
+            title="Which aurorae colours can you identify? [select none-multiple]",
+            options=["None", "Green", "Red", "Blue", "Purple", "Pink", "Black", "Sunlit top"],
+            section="scientific",
+            key="aurora_colours",
+            columns=7
+        )
+
 
         # Sky state: clear/some cloud/lots of cloud
         self.cloud_button = self.add_radio_group(
@@ -310,12 +319,35 @@ class ImageViewer(QWidget):
                 value=value.lower()
             )
         )
+
         # What shapes of aurora can we see (according to the herlingshaw guide)
-                
-        
-        
-        
-        
+        self.aurora_shapes = self.add_multiselect_checkboxes(
+            layout=self.annotations_layout,
+            title="Which auroral forms can you identify? [select none-multiple]",
+            options=["None", "Quiet Arc", "Active Arc", "Rays/Pillars",
+                     "Rayed Arc/Curtain", "Bands", "Beads", "Curls", "Folds",
+                     "Spiral/Cinnamon Roll", "Corona",
+                     "Westward Travelling Surge", "Enhanced Aurora"],
+            section="scientific",
+            key="aurora_shapes",
+            columns=5
+        )   
+             
+        # Any other artifacts present? stars / moon / light pollution / ground level object (tree/car/animal)
+        self.aurora_shapes = self.add_multiselect_checkboxes(
+            layout=self.annotations_layout,
+            title="Are there any other artifacts present? [select none-multiple]",
+            options=["None", "Stars", "Moon", "Light Pollution",
+                     "Ground object (tree/car/animal)"],
+            section="scientific",
+            key="aurora_shapes",
+            columns=4
+        )   
+
+
+
+
+
         
         self.annotations_layout.addStretch()
 
@@ -335,6 +367,111 @@ class ImageViewer(QWidget):
 
         # Update buttons, title, etc
         self.image_change_updates()
+
+
+    def set_multiselect(self, checkbox_dict, values):
+        if values is None:
+            values = set()
+    
+        for value, checkbox in checkbox_dict.items():
+            checkbox.blockSignals(True)
+            checkbox.setChecked(value in values)
+            checkbox.blockSignals(False)
+
+
+    def multiselect_changed(self, section, key, option, state):
+        image = self.images[self.index]
+    
+        current = image.get_annotation(section, key, default=set())
+    
+        # Ensure we are working with a set
+        if not isinstance(current, set):
+            current = set(current)
+    
+        if state == Qt.Checked:
+            current.add(option.lower())
+        else:
+            current.discard(option.lower())
+    
+        image.set_annotation(section, key, current)
+    
+    
+    def add_multiselect_checkboxes(
+        self,
+        layout,
+        title,
+        options,
+        section,
+        key,
+        columns=4
+    ):
+        """
+        Create a titled group of checkboxes arranged in a grid (wrapping).
+        """
+        title_label = QLabel(title)
+        #title_label.setStyleSheet("font-weight: bold;")
+        layout.addWidget(title_label)
+    
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(15)
+        grid.setVerticalSpacing(5)
+    
+        checkboxes = {}
+    
+        for i, opt in enumerate(options):
+            row = i // columns
+            col = i % columns
+    
+            cb = QCheckBox(opt)
+            cb.stateChanged.connect(
+                lambda state, o=opt: self.multiselect_changed(
+                    section, key, o, state
+                )
+            )
+    
+            grid.addWidget(cb, row, col)
+            checkboxes[opt.lower()] = cb
+    
+        layout.addLayout(grid)
+    
+        return checkboxes
+
+    
+    # def add_multiselect_checkboxes(
+    #     self,
+    #     layout,
+    #     title,
+    #     options,
+    #     section,
+    #     key
+    # ):
+    #     """
+    #     Create a titled group of checkboxes where multiple selections are allowed.
+    #     Stores a list of selected values.
+    #     """
+    #     title_label = QLabel(title)
+    #     #title_label.setStyleSheet("font-weight: bold;")
+    #     layout.addWidget(title_label)
+    
+    #     checkbox_layout = QHBoxLayout()    
+    
+    #     checkboxes = {}
+    
+    #     for opt in options:
+    #         cb = QCheckBox(opt)
+    
+    #         cb.stateChanged.connect(
+    #             lambda state, o=opt: self.multiselect_changed(
+    #                 section, key, o, state
+    #             )
+    #         )
+    
+    #         checkbox_layout.addWidget(cb)
+    #         checkboxes[opt.lower()] = cb
+    #     layout.addLayout(checkbox_layout)
+    #     return checkboxes
+
+
 
     def annotation_radio_changed(self, section, key, value):
         image = self.images[self.index]
@@ -367,17 +504,21 @@ class ImageViewer(QWidget):
         """
         # Title label
         title_label = QLabel(title)
-        title_label.setStyleSheet("font-weight: bold;")
+        #title_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(title_label)
     
         # Button group
         group = QButtonGroup(self)
-    
+        
+        button_layout = QHBoxLayout()
+        
         for opt in options:
             button = QRadioButton(opt)
             group.addButton(button)
-            layout.addWidget(button)
-    
+            button_layout.addWidget(button)
+
+        layout.addLayout(button_layout)
+
         if on_change is not None:
             group.buttonClicked.connect(
                 lambda btn: on_change(btn.text())
@@ -453,6 +594,21 @@ class ImageViewer(QWidget):
         
         self.set_radio_group_value(self.cloud_button, cloudy)
 
+        # Auroral Colours
+        colours = image.get_annotation(
+            "scientific",
+            "aurora_colours",
+            default=set()
+        )
+        self.set_multiselect(self.aurora_colours, colours)
+        
+        # Auroral Colours
+        shapes = image.get_annotation(
+            "scientific",
+            "aurora_shapes",
+            default=set()
+        )
+        self.set_multiselect(self.aurora_shapes, shapes)        
 
 
 
@@ -481,13 +637,13 @@ class ImageViewer(QWidget):
         image = self.images[self.index]
 
         text = (
-            f"Date: {image.capture_date}\n"
-            f"Time: {image.capture_time}\n"
-            f"Time provided?: {image.time_provided}\n"
-            f"Storm: {image.storm_name}\n"
-            f"User says setting: {image.setting}\n"
-            f"User says edited: {image.edited}\n"
-            "\n"
+            f"Date: {image.capture_date} | Time: {image.capture_time}\n"
+            #f"Time: {image.capture_time}\n"
+            f"Storm: {image.storm_name} | Time provided?: {image.time_provided}\n"
+            #f"Storm: {image.storm_name}\n"
+            f"Setting: {image.setting} | Edited: {image.edited}\n"
+            #f"User says edited: {image.edited}\n"
+            #"\n"
             f"User comment: {image.user_comment}\n"
         )
     
