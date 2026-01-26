@@ -13,7 +13,7 @@ from functools import partial
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
                                QVBoxLayout, QWidget, QHBoxLayout,
                                QSizePolicy, QCheckBox, QRadioButton,
-                               QButtonGroup, QGridLayout)
+                               QButtonGroup, QGridLayout, QMessageBox)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
@@ -269,7 +269,7 @@ class ImageViewer(QWidget):
         # Is it faint/bright?
         self.brightness_button = self.add_radio_group(
             layout=self.annotations_layout,
-            title="How bright are the Aurorae in this image?",
+            title="How bright are the Aurorae in this image?*",
             options=["Faint", "Moderate", "Bright", "No aurora"],
             on_change=lambda value: self.annotation_radio_changed(
                 section="scientific",
@@ -292,7 +292,7 @@ class ImageViewer(QWidget):
         # Sky state: clear/some cloud/lots of cloud
         self.cloud_button = self.add_radio_group(
             layout=self.annotations_layout,
-            title="How much cloud cover is there?",
+            title="How much cloud cover is there?*",
             options=["No clouds", "Some cloud cover", "Completely clouded"],
             on_change=lambda value: self.annotation_radio_changed(
                 section="scientific",
@@ -370,7 +370,7 @@ class ImageViewer(QWidget):
             current.discard(option.lower())
     
         image.set_annotation(section, key, current)
-    
+        self.update_buttons()
     
     def add_multiselect_checkboxes(
         self,
@@ -414,12 +414,33 @@ class ImageViewer(QWidget):
     def annotation_radio_changed(self, section, key, value):
         image = self.images[self.index]
         image.set_annotation(section=section, key=key, value=value)
-
+        self.update_buttons()
+    # def set_radio_group_value(self, group, value):
+    #     for button in group.buttons():
+    #         button.blockSignals(True)
+    #         button.setChecked(button.text().lower() == value)
+    #         button.blockSignals(False)
+    
     def set_radio_group_value(self, group, value):
+        # Temporarily allow unchecking all buttons
+        group.setExclusive(False)
+    
         for button in group.buttons():
             button.blockSignals(True)
-            button.setChecked(button.text().lower() == value)
+            button.setChecked(False)
             button.blockSignals(False)
+    
+        group.setExclusive(True)
+    
+        # Now set the desired value (if any)
+        if value is not None:
+            for button in group.buttons():
+                if button.text().lower() == value:
+                    button.blockSignals(True)
+                    button.setChecked(True)
+                    button.blockSignals(False)
+                    break
+
 
     def add_radio_group(self, layout, title, options, on_change=None):
         """
@@ -475,7 +496,7 @@ class ImageViewer(QWidget):
             key=key,
             value=value
         )
-
+        self.update_buttons()
 
     def set_checkbox(self, checkbox, value):
         checkbox.blockSignals(True)
@@ -486,42 +507,42 @@ class ImageViewer(QWidget):
         image = self.images[self.index]
 
         # Practical annotations
-        # Checkboxes
-        for cb in ["is_night_sky", "is_modified", "is_during_storm",
+        cbs = [self.is_night_sky_checkbox, self.is_modified_checkbox,
+              self.is_during_storm_checkbox, self.is_correct_storm_checkbox,
+              self.needs_crop_checkbox, self.follow_up_checkbox,
+              self.setting_correct]
+        cb_values = ["is_night_sky", "is_modified", "is_during_storm",
                    "is_correct_storm", "needs_crop", "follow_up",
-                   "setting_correct"]:
+                   "setting_correct"]
+        # Checkboxes
+        for k, (cb, cb_value) in enumerate(zip(cbs, cb_values)):
             self.set_checkbox(
-                self.is_night_sky_checkbox,
-                image.get_annotation("practical", cb, False)
+                cb,
+                image.get_annotation("practical", cb_value, False)
             )
-
 
         # Scientific annotations
         # Checkboxes
-        for cb in ["aurora_present"]:
-            self.set_checkbox(
-                self.is_night_sky_checkbox,
-                image.get_annotation("scientific", cb, False)
+        self.set_checkbox(self.aurora_present_checkbox,
+                image.get_annotation("scientific", "aurora_present", False)
             )
 
-
+        # Radio buttons
         brightness = image.get_annotation(
             "scientific",
             "aurora_brightness",
             default=None
         )
-        
         self.set_radio_group_value(self.brightness_button, brightness)
-
 
         cloudy = image.get_annotation(
             "scientific",
             "cloud_cover",
             default=None
         )
-        
         self.set_radio_group_value(self.cloud_button, cloudy)
 
+        # Multiselect
         # Auroral Colours
         colours = image.get_annotation(
             "scientific",
@@ -592,33 +613,54 @@ class ImageViewer(QWidget):
             + f"Filename: {self.images[self.index].filename}\n"
             + f"Record ID: {self.images[self.index].record_id}")
 
+    # def next_image(self):
+    #     """
+    #     Move to the next image.
+
+    #     Returns
+    #     -------
+    #     None.
+
+    #     """
+    #     if self.index < (self.n_images - 1):
+    #         self.index += 1
+    #         self.image_label.set_image(self.images[self.index].filepath)
+    #         self.image_change_updates()
+    
     def next_image(self):
-        """
-        Move to the next image.
-
-        Returns
-        -------
-        None.
-
-        """
+        if not self.can_leave_image():
+            self.show_incomplete_warning()
+            return
+    
         if self.index < (self.n_images - 1):
             self.index += 1
             self.image_label.set_image(self.images[self.index].filepath)
             self.image_change_updates()
 
     def previous_image(self):
-        """
-        Move to the previous image.
-
-        Returns
-        -------
-        None.
-
-        """
+        if not self.can_leave_image():
+            self.show_incomplete_warning()
+            return
+    
         if self.index > 0:
             self.index -= 1
             self.image_label.set_image(self.images[self.index].filepath)
             self.image_change_updates()
+
+
+    # def previous_image(self):
+    #     """
+    #     Move to the previous image.
+
+    #     Returns
+    #     -------
+    #     None.
+
+    #     """
+    #     if self.index > 0:
+    #         self.index -= 1
+    #         self.image_label.set_image(self.images[self.index].filepath)
+    #         self.image_change_updates()
 
     def update_buttons(self):
         """
@@ -629,8 +671,15 @@ class ImageViewer(QWidget):
         None.
 
         """
-        self.previous_button.setEnabled(self.index > 0)
-        self.next_button.setEnabled(self.index < (self.n_images - 1))
+        # self.previous_button.setEnabled(self.index > 0)
+        # self.next_button.setEnabled(self.index < (self.n_images - 1))
+
+
+        can_move = self.can_leave_image()
+    
+        self.previous_button.setEnabled(self.index > 0 and can_move)
+        self.next_button.setEnabled(self.index < (self.n_images - 1) and can_move)
+
 
     def image_change_updates(self):
         """
@@ -646,6 +695,32 @@ class ImageViewer(QWidget):
         self.update_metadata()
         self.update_userinput()
         self.update_annotations()
+
+    def can_leave_image(self, REQUIRED_ANNOTATIONS = {"scientific": [
+            "aurora_brightness", "cloud_cover", ]}):
+        image = self.images[self.index]
+    
+        for section, keys in REQUIRED_ANNOTATIONS.items():
+            for key in keys:
+                value = image.get_annotation(section, key, default=None)
+    
+                # Checkboxes → must not be None
+                if value is None:
+                    return False
+    
+                # Radio groups → must not be None
+                if isinstance(value, str) and value.strip() == "":
+                    return False
+    
+        return True
+
+    def show_incomplete_warning(self):
+        QMessageBox.warning(
+            self,
+            "Incomplete annotations",
+            "Please answer all questions* before leaving this image."
+        )
+
 
 
 def list_images():
