@@ -40,6 +40,9 @@ class AuroralImage():
             "practical": {},
             "scientific": {}
         }
+    def set_reviewer(self, initials):
+        self.reviewer = initials
+
 
     def attach_user_data(self, user_input_df):
         

@@ -13,7 +13,8 @@ from functools import partial
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
                                QVBoxLayout, QWidget, QHBoxLayout,
                                QSizePolicy, QCheckBox, QRadioButton,
-                               QButtonGroup, QGridLayout, QMessageBox)
+                               QButtonGroup, QGridLayout, QMessageBox,
+                               QDialog, QLineEdit)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
@@ -25,6 +26,14 @@ from read_data import read_user_input_data
 
 image_dir = os.path.join(
     "C:"+os.sep, r"\Users\Alexandra\Documents\data\aurora_eire\test_images")
+
+
+ALLOWED_USERS = {
+    "ARF": "Alexandra",
+    "SAM": "Sophie",
+    "SJW": "Simon",
+    "DMH": "Daragh"
+}
 
 
 class ImageWindow(QLabel):
@@ -96,13 +105,17 @@ class ImageViewer(QWidget):
     # it contains other widgets
     # manages the "application state" i.e. which image we're on
     # responds to user actions (buttons)
-    def __init__(self, images):
+    def __init__(self, images, user_initials, user_name):
 
         # Initialise the Qt machinery
         super().__init__()
 
         # Store the image paths into the class
         self.images = images
+        
+        # Store the current user
+        self.user_initials = user_initials
+        self.user_name = user_name
 
         # Store number of images
         self.n_images = len(self.images)
@@ -170,6 +183,11 @@ class ImageViewer(QWidget):
         self.user_metadata_panel = QWidget()
         self.user_metadata_layout = QVBoxLayout(self.user_metadata_panel)
         
+        self.user_label = QLabel(f"Hello {self.user_name}, thank you for reviewing images today!")
+        self.user_label.setAlignment(Qt.AlignCenter)
+        self.user_label.setStyleSheet("font-weight: bold; font-size: 16px;")
+        self.right_layout.insertWidget(0, self.user_label)
+
         self.user_metadata_title = QLabel("User metadata")
         self.user_metadata_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         
@@ -180,7 +198,6 @@ class ImageViewer(QWidget):
         self.user_metadata_layout.addWidget(self.user_metadata_title)
         self.user_metadata_layout.addWidget(self.user_metadata_label)
         self.user_metadata_layout.addStretch()
-        
 
         self.metadata_row_layout.addWidget(self.image_metadata_panel)
         self.metadata_row_layout.addWidget(self.user_metadata_panel)
@@ -251,18 +268,18 @@ class ImageViewer(QWidget):
         self.annotations_layout.addSpacing(10)
         self.annotations_layout.addWidget(self.scientific_title)  
         
-        # Can we see aurora?
-        self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
-        self.aurora_present_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "scientific", "aurora_present")
-        )
-        self.annotations_layout.addWidget(self.aurora_present_checkbox)    
+        # # Can we see aurora?
+        # self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
+        # self.aurora_present_checkbox.stateChanged.connect(
+        #     partial(self.annotation_checkbox_changed, "scientific", "aurora_present")
+        # )
+        # self.annotations_layout.addWidget(self.aurora_present_checkbox)    
 
         # Is it faint/bright?
         self.brightness_button = self.add_radio_group(
             layout=self.annotations_layout,
             title="How bright are the Aurorae in this image?* [select one]",
-            options=["Faint", "Moderate", "Bright", "No aurora"],
+            options=["No aurora", "Faint", "Moderate", "Bright"],
             on_change=lambda value: self.annotation_radio_changed(
                 section="scientific",
                 key="aurora_brightness",
@@ -274,7 +291,8 @@ class ImageViewer(QWidget):
         self.aurora_colours = self.add_multiselect_checkboxes(
             layout=self.annotations_layout,
             title="Which aurorae colours can you identify? [select none-multiple]",
-            options=["None", "Green", "Red", "Blue", "Purple", "Pink", "Black", "Sunlit top"],
+            options=["No aurora", "Green", "Red", "Blue", "Purple",
+                     "Pink", "Black", "Sunlit top"],
             section="scientific",
             key="aurora_colours",
             columns=7
@@ -296,7 +314,7 @@ class ImageViewer(QWidget):
         self.aurora_shapes = self.add_multiselect_checkboxes(
             layout=self.annotations_layout,
             title="Which auroral forms can you identify? [select none-multiple]",
-            options=["None", "Quiet Arc", "Active Arc", "Rays/Pillars",
+            options=["No aurora", "Quiet Arc", "Active Arc", "Rays/Pillars",
                      "Rayed Arc/Curtain", "Bands", "Beads", "Curls", "Folds",
                      "Spiral/Cinnamon Roll", "Corona",
                      "Westward Travelling Surge", "Enhanced Aurora"],
@@ -310,7 +328,8 @@ class ImageViewer(QWidget):
             layout=self.annotations_layout,
             title="Are there any other artifacts partially blocking the aurora? [select none-multiple]",
             options=["None", "Stars", "Moon", "Light Pollution",
-                     "Ground object (tree/car/animal)"],
+                     "Ground object (tree/car/animal)",
+                     "Sky object (e.g. plane/helicopter/UAF)"],
             section="scientific",
             key="artifacts",
             columns=4
@@ -611,10 +630,10 @@ class ImageViewer(QWidget):
             )
 
         # Scientific annotations
-        # Checkboxes
-        self.set_checkbox(self.aurora_present_checkbox,
-                image.get_annotation("scientific", "aurora_present", False)
-            )
+        # # Checkboxes
+        # self.set_checkbox(self.aurora_present_checkbox,
+        #         image.get_annotation("scientific", "aurora_present", False)
+        #     )
 
         # Radio buttons
         brightness = image.get_annotation(
@@ -774,6 +793,7 @@ class ImageViewer(QWidget):
         self.update_metadata()
         self.update_userinput()
         self.update_annotations()
+        self.images[self.index].set_reviewer(self.user_initials)
 
     def can_leave_image(self, REQUIRED_ANNOTATIONS = {"scientific": [
             "aurora_brightness", "cloud_cover", ]}):
@@ -800,6 +820,43 @@ class ImageViewer(QWidget):
             "Please answer all questions* before leaving this image."
         )
     # -------------------------------------------------------
+
+class LoginDialog(QDialog):
+
+    def __init__(self, allowed_users):
+        super().__init__()
+        self.allowed_users = allowed_users
+        self.user_initials = None
+        self.user_name = None
+
+        self.setWindowTitle("User login")
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Enter your initials (all caps, inc. middle):"))
+
+        self.input = QLineEdit()
+        self.input.setMaxLength(5)
+        layout.addWidget(self.input)
+
+        self.error_label = QLabel("")
+        self.error_label.setStyleSheet("color: red;")
+        layout.addWidget(self.error_label)
+
+        btn = QPushButton("Login")
+        btn.clicked.connect(self.try_login)
+        layout.addWidget(btn)
+
+    def try_login(self):
+        initials = self.input.text().strip().upper()
+
+        if initials not in self.allowed_users:
+            self.error_label.setText("Unknown initials")
+            return
+
+        self.user_initials = initials
+        self.user_name = self.allowed_users[initials]
+        self.accept()
 
 
 def list_images():
@@ -833,12 +890,15 @@ def main():
     
 
     images = list_images()
-    
-
 
     app = QApplication(sys.argv)
 
-    viewer = ImageViewer(images)
+    login = LoginDialog(ALLOWED_USERS)
+    if login.exec() != QDialog.Accepted:
+        sys.exit()
+
+    viewer = ImageViewer(images, user_initials=login.user_initials,
+        user_name=login.user_name)
     viewer.show()
 
     sys.exit(app.exec())
