@@ -40,6 +40,8 @@ class AuroralImage():
             "practical": {},
             "scientific": {}
         }
+        self.reviewer = None
+        
     def set_reviewer(self, initials):
         self.reviewer = initials
 
@@ -64,7 +66,14 @@ class AuroralImage():
         self.user_comment = img_user_data.Comments.values[0]
         self.filesize = img_user_data.Filesize.values[0]
         self.filetype = img_user_data.MimeType.values[0]
-        self.make_model_meta_data = img_user_data.Metadata.values[0]
+        # self.make_model_meta_data = img_user_data.Metadata.values[0]
+        # breakpoint()
+        if img_user_data.Metadata.values[0] == '[]':
+            self.camera_make = None
+            self.camera_model= None
+        else:
+            self.camera_make = img_user_data.Metadata.values[0]["camera_make"]
+            self.camera_model =img_user_data.Metadata.values[0]["camera_model"]
         self.SubmissionTimestamp = img_user_data.SubmissionTimestamp.values[0]
         self.ProcessedTimestamp = img_user_data.ProcessedTimestamp.values[0]
 
@@ -116,12 +125,82 @@ class AuroralImage():
         except Exception:
             pass
 
+    # def set_annotation(self, section, key, value):
+    #     self.annotations[section][key] = value
+    
+    # def get_annotation(self, section, key, default=None):
+    #     return self.annotations[section].get(key, default)
     def set_annotation(self, section, key, value):
+        if section not in self.annotations:
+            self.annotations[section] = {}
+    
         self.annotations[section][key] = value
     
-    def get_annotation(self, section, key, default=None):
-        return self.annotations[section].get(key, default)
     
+    def get_annotation(self, section, key, default=None):
+        return self.annotations.get(section, {}).get(key, default)
+        
+    
+    
+    def to_flat_dict(self):
+        row = {
+            "filename": self.filename,
+            "file_extension": self.file_extension,
+            "image_n": self.image_n,
+            "record_id": self.record_id,
+            "reviewed_by": getattr(self, "reviewer", None),
+            
+            "file_created_time": self.file_created,
+            "file_modified_time": self.file_modified,
+            "exif_datetime": self.exif_datetime,
+            "file_size_in_bytes": self.file_size_in_bytes,
+            
+            
+            
+            "user_capture_date": self.capture_date,
+            "user_capture_time": self.capture_time,
+            "capture_Timestamp": self.capture_Timestamp,
+            "user_time_provided": self.time_provided,
+            "storm_name": self.storm_name,
+            "County": self.County,
+            "geo_lat": self.geo_lat,
+            "geo_lon": self.geo_lon,
+            "direction": self.direction,
+
+            "setting": self.setting,
+            "device": self.device,
+            "edited": self.edited,
+            "user_comment": self.user_comment,
+            "filesize": self.filesize,
+            "filetype": self.filetype,
+            "camera_make": self.camera_make,
+            "camera_model": self.camera_model,
+            "SubmissionTimestamp": self.SubmissionTimestamp,
+            "ProcessedTimestamp": self.ProcessedTimestamp,
+            
+            # "is_night_sky": self.is_night_sky,
+            # "is_modified": self.is_modified,
+            # "is_during_storm": self.is_during_storm,
+            # "is_correct_storm": self.is_correct_storm,
+            # "needs_crop": self.needs_crop,
+            # "follow_up": self.follow_up,
+            # "setting_correct": self.setting_correct,
+            # "aurora_brightness": self.aurora_brightness,
+            # "aurora_colours": self.aurora_colours,
+            # "cloud_cover": self.cloud_cover,
+            # "aurora_shapes": self.aurora_shapes,
+            # "artifacts": self.artifacts
+        }
+    
+        for section, values in self.annotations.items():
+            for key, val in values.items():
+                if isinstance(val, set):
+                    row[f"{key}"] = ",".join(sorted(val))
+                else:
+                    row[f"{key}"] = val
+    
+        return row
+
 
     # def determine_capture_time(self):
     #     """

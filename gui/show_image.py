@@ -7,6 +7,7 @@ Created on Tue Jan  6 15:01:55 2026
 
 import os
 import sys
+import csv
 import pathlib
 from functools import partial
 
@@ -23,10 +24,14 @@ from auroral_image_class import AuroralImage
 sys.path.append(r'C:\Users\Alexandra\Documents\wind_waves_akr_code\aurora_eire')
 from read_data import read_user_input_data
 
-
+# This is the path where you put the images
 image_dir = os.path.join(
     "C:"+os.sep, r"\Users\Alexandra\Documents\data\aurora_eire\test_images")
 
+output_data_dir = os.path.join(
+    "C:"+os.sep,
+    r"\Users\Alexandra\Documents\data\aurora_eire\pass1_annotations")
+# OUTPUT_CSV = "aurora_annotations.csv"
 
 ALLOWED_USERS = {
     "ARF": "Alexandra",
@@ -595,6 +600,7 @@ class ImageViewer(QWidget):
 
         """
         checkbox.blockSignals(True)
+        # checkbox.setChecked(bool(value))
         checkbox.setChecked(bool(value))
         checkbox.blockSignals(False)
     # -------------------------------------------------------
@@ -623,12 +629,15 @@ class ImageViewer(QWidget):
                    "is_correct_storm", "needs_crop", "follow_up",
                    "setting_correct"]
         # Checkboxes
-        for k, (cb, cb_value) in enumerate(zip(cbs, cb_values)):
-            self.set_checkbox(
-                cb,
-                image.get_annotation("practical", cb_value, False)
-            )
-
+        # for k, (cb, cb_value) in enumerate(zip(cbs, cb_values)):
+        #     self.set_checkbox(
+        #         cb,
+        #         image.get_annotation("practical", cb_value, False)
+        #     )
+        for cb, cb_value in zip(cbs, cb_values):
+            val = image.get_annotation("practical", cb_value, None)
+            self.set_checkbox(cb, val is True)
+            
         # Scientific annotations
         # # Checkboxes
         # self.set_checkbox(self.aurora_present_checkbox,
@@ -741,6 +750,8 @@ class ImageViewer(QWidget):
             self.show_incomplete_warning()
             return
     
+        self.write_current_image_to_csv(self.images[self.index])
+    
         if self.index < (self.n_images - 1):
             self.index += 1
             self.image_label.set_image(self.images[self.index].filepath)
@@ -758,6 +769,8 @@ class ImageViewer(QWidget):
         if not self.can_leave_image():
             self.show_incomplete_warning()
             return
+    
+        self.write_current_image_to_csv(self.images[self.index])
     
         if self.index > 0:
             self.index -= 1
@@ -820,6 +833,27 @@ class ImageViewer(QWidget):
             "Please answer all questions* before leaving this image."
         )
     # -------------------------------------------------------
+
+
+    
+    def write_current_image_to_csv(self, image):
+        # image = self.images[self.index]
+        row = image.to_flat_dict()
+    
+        output_csv = os.path.join(output_data_dir,
+                                  "annotations_" + self.user_initials + ".csv")
+    
+        file_exists = os.path.exists(output_csv)
+    
+        with open(output_csv, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=row.keys())
+    
+            if not file_exists:
+                writer.writeheader()
+    
+            writer.writerow(row)
+
+
 
 class LoginDialog(QDialog):
 
