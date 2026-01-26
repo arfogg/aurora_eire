@@ -203,9 +203,6 @@ class ImageViewer(QWidget):
         )
         self.annotations_layout.addWidget(self.is_night_sky_checkbox)    
 
-        # Compare the metadata and user date/time. Do they match (to the minute)?
-        # ??? can be done computationally
-
         # Based on the modified vs capture time, did the user edit the photo?
         self.is_modified_checkbox = QCheckBox("Based on the modified vs capture time, did the user edit the photo?")
         self.is_modified_checkbox.stateChanged.connect(
@@ -213,9 +210,8 @@ class ImageViewer(QWidget):
         )
         self.annotations_layout.addWidget(self.is_modified_checkbox)    
 
-
         # Is the input datetime during either storm?
-        self.is_during_storm_checkbox = QCheckBox("Is the datetime during either storm?")
+        self.is_during_storm_checkbox = QCheckBox("Are any of the datetimes during either storm?")
         self.is_during_storm_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "practical", "is_during_storm")
         )
@@ -249,16 +245,12 @@ class ImageViewer(QWidget):
         )
         self.annotations_layout.addWidget(self.setting_correct)    
         
-                
-        
-        
-                
+        # Scientific Annotations
         self.scientific_title = QLabel("Scientific notes")
         self.scientific_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         self.annotations_layout.addSpacing(10)
         self.annotations_layout.addWidget(self.scientific_title)  
         
-                
         # Can we see aurora?
         self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
         self.aurora_present_checkbox.stateChanged.connect(
@@ -269,13 +261,13 @@ class ImageViewer(QWidget):
         # Is it faint/bright?
         self.brightness_button = self.add_radio_group(
             layout=self.annotations_layout,
-            title="How bright are the Aurorae in this image?*",
+            title="How bright are the Aurorae in this image?* [select one]",
             options=["Faint", "Moderate", "Bright", "No aurora"],
             on_change=lambda value: self.annotation_radio_changed(
                 section="scientific",
                 key="aurora_brightness",
                 value=value.lower()
-            )
+                )
         )
 
         # What colours can we see? (green/red/pink/purple/...?)
@@ -288,11 +280,10 @@ class ImageViewer(QWidget):
             columns=7
         )
 
-
         # Sky state: clear/some cloud/lots of cloud
         self.cloud_button = self.add_radio_group(
             layout=self.annotations_layout,
-            title="How much cloud cover is there?*",
+            title="How much cloud cover is there?* [select one]",
             options=["No clouds", "Some cloud cover", "Completely clouded"],
             on_change=lambda value: self.annotation_radio_changed(
                 section="scientific",
@@ -326,14 +317,11 @@ class ImageViewer(QWidget):
         )   
 
         self.annotations_layout.addStretch()
-
         self.right_layout.addWidget(self.annotations_panel, stretch=1)
 
         main_layout = QHBoxLayout()
-        
         main_layout.addLayout(left_layout, stretch=3)
         main_layout.addWidget(self.right_panel, stretch=2)
-        
         self.setLayout(main_layout)
 
         # Window title
@@ -345,7 +333,26 @@ class ImageViewer(QWidget):
         self.image_change_updates()
 
 
+    # -------------------------------------------------------
+    # Helper Functions for different annotations
+    #
+    # MULTISELECT -------------------------------------------
     def set_multiselect(self, checkbox_dict, values):
+        """
+        Set/reset values for a multiselect widget.
+
+        Parameters
+        ----------
+        checkbox_dict : TYPE
+            DESCRIPTION.
+        values : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         if values is None:
             values = set()
     
@@ -354,12 +361,29 @@ class ImageViewer(QWidget):
             checkbox.setChecked(value in values)
             checkbox.blockSignals(False)
 
-
     def multiselect_changed(self, section, key, option, state):
+        """
+        Changer function for multiselect widget.
+
+        Parameters
+        ----------
+        section : TYPE
+            DESCRIPTION.
+        key : TYPE
+            DESCRIPTION.
+        option : TYPE
+            DESCRIPTION.
+        state : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         image = self.images[self.index]
-    
         current = image.get_annotation(section, key, default=set())
-    
+
         # Ensure we are working with a set
         if not isinstance(current, set):
             current = set(current)
@@ -371,16 +395,9 @@ class ImageViewer(QWidget):
     
         image.set_annotation(section, key, current)
         self.update_buttons()
-    
-    def add_multiselect_checkboxes(
-        self,
-        layout,
-        title,
-        options,
-        section,
-        key,
-        columns=4
-    ):
+
+    def add_multiselect_checkboxes(self, layout, title, options, section,
+                                   key, columns=4):
         """
         Create a titled group of checkboxes arranged in a grid (wrapping).
         """
@@ -406,22 +423,50 @@ class ImageViewer(QWidget):
     
             grid.addWidget(cb, row, col)
             checkboxes[opt.lower()] = cb
-    
+
         layout.addLayout(grid)
-    
+
         return checkboxes
 
+    # RADIO GROUPS -------------------------------------------
     def annotation_radio_changed(self, section, key, value):
+        """
+        Changer function for radio group widgets.
+
+        Parameters
+        ----------
+        section : TYPE
+            DESCRIPTION.
+        key : TYPE
+            DESCRIPTION.
+        value : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         image = self.images[self.index]
         image.set_annotation(section=section, key=key, value=value)
         self.update_buttons()
-    # def set_radio_group_value(self, group, value):
-    #     for button in group.buttons():
-    #         button.blockSignals(True)
-    #         button.setChecked(button.text().lower() == value)
-    #         button.blockSignals(False)
-    
+
     def set_radio_group_value(self, group, value):
+        """
+        Set/reset the value of a radio group widget.
+
+        Parameters
+        ----------
+        group : TYPE
+            DESCRIPTION.
+        value : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         # Temporarily allow unchecking all buttons
         group.setExclusive(False)
     
@@ -444,7 +489,7 @@ class ImageViewer(QWidget):
 
     def add_radio_group(self, layout, title, options, on_change=None):
         """
-        Create a titled radio-button group and add it to a layout.
+        Create a titled radio-button group widget and add it to a layout.
     
         Parameters
         ----------
@@ -485,9 +530,25 @@ class ImageViewer(QWidget):
     
         return group
 
-
-
+    # CHECKBOXES -------------------------------------------
     def annotation_checkbox_changed(self, section, key, state):
+        """
+        Changer function for checkbox widget.
+
+        Parameters
+        ----------
+        section : TYPE
+            DESCRIPTION.
+        key : TYPE
+            DESCRIPTION.
+        state : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         image = self.images[self.index]
         value = (state == Qt.Checked)
     
@@ -499,11 +560,39 @@ class ImageViewer(QWidget):
         self.update_buttons()
 
     def set_checkbox(self, checkbox, value):
+        """
+        Set/reset checkbox widget.
+
+        Parameters
+        ----------
+        checkbox : TYPE
+            DESCRIPTION.
+        value : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         checkbox.blockSignals(True)
         checkbox.setChecked(bool(value))
         checkbox.blockSignals(False)
-
+    # -------------------------------------------------------
+    #
+    # -------------------------------------------------------
+    # UPDATE FUNCTIONS
+    #
+    # UPDATE ANNOTATIONS ------------------------------------
     def update_annotations(self):
+        """
+        Function to update all annotations when needed.
+
+        Returns
+        -------
+        None.
+
+        """
         image = self.images[self.index]
 
         # Practical annotations
@@ -567,6 +656,7 @@ class ImageViewer(QWidget):
         )
         self.set_multiselect(self.artifacts, arfs)        
 
+    # UPDATE IMAGE METADATA IF IMAGE CHANGED ----------------------------
     def update_metadata(self):
         image = self.images[self.index]
 
@@ -584,6 +674,7 @@ class ImageViewer(QWidget):
 
         self.metadata_label.setText(text)
 
+    # UPDATE USER INPUT DATA IF IMAGE CHANGED ---------------------------
     def update_userinput(self):
         image = self.images[self.index]
 
@@ -596,7 +687,7 @@ class ImageViewer(QWidget):
     
         self.user_metadata_label.setText(text)
 
-
+    # UPDATE IMAGE TITLE IF IMAGE CHANGED -------------------------------
     def update_image_title(self):
         """
         Update the image title.
@@ -613,21 +704,20 @@ class ImageViewer(QWidget):
             + f"Filename: {self.images[self.index].filename}\n"
             + f"Record ID: {self.images[self.index].record_id}")
 
-    # def next_image(self):
-    #     """
-    #     Move to the next image.
-
-    #     Returns
-    #     -------
-    #     None.
-
-    #     """
-    #     if self.index < (self.n_images - 1):
-    #         self.index += 1
-    #         self.image_label.set_image(self.images[self.index].filepath)
-    #         self.image_change_updates()
-    
+    # -------------------------------------------------------
+    #
+    # -------------------------------------------------------
+    # MOVE BETWEEN IMAGES
+    #    
     def next_image(self):
+        """
+        Move to next image
+
+        Returns
+        -------
+        None.
+
+        """
         if not self.can_leave_image():
             self.show_incomplete_warning()
             return
@@ -638,6 +728,14 @@ class ImageViewer(QWidget):
             self.image_change_updates()
 
     def previous_image(self):
+        """
+        Move to previous image
+
+        Returns
+        -------
+        None.
+
+        """
         if not self.can_leave_image():
             self.show_incomplete_warning()
             return
@@ -646,21 +744,6 @@ class ImageViewer(QWidget):
             self.index -= 1
             self.image_label.set_image(self.images[self.index].filepath)
             self.image_change_updates()
-
-
-    # def previous_image(self):
-    #     """
-    #     Move to the previous image.
-
-    #     Returns
-    #     -------
-    #     None.
-
-    #     """
-    #     if self.index > 0:
-    #         self.index -= 1
-    #         self.image_label.set_image(self.images[self.index].filepath)
-    #         self.image_change_updates()
 
     def update_buttons(self):
         """
@@ -671,10 +754,6 @@ class ImageViewer(QWidget):
         None.
 
         """
-        # self.previous_button.setEnabled(self.index > 0)
-        # self.next_button.setEnabled(self.index < (self.n_images - 1))
-
-
         can_move = self.can_leave_image()
     
         self.previous_button.setEnabled(self.index > 0 and can_move)
@@ -720,7 +799,7 @@ class ImageViewer(QWidget):
             "Incomplete annotations",
             "Please answer all questions* before leaving this image."
         )
-
+    # -------------------------------------------------------
 
 
 def list_images():
