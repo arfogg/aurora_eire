@@ -54,9 +54,8 @@ class AuroralImage():
         
         # Initialise variables to contain user annotations
         self.annotations = {}
-        #     "practical": {},
-        #     "scientific": {}
-        # }
+
+        # Initialise name of reviewer
         self.reviewer = None
         
         # Initialise whether the image has been reviewed
@@ -100,14 +99,11 @@ class AuroralImage():
 
         # Format time
         if pd.isnull(img_user_data.Time) is True:
-            # print('bananas')
             # ?? here we should consider what time of day, could be better to assume end of day
             self.capture_Timestamp = pd.Timestamp(img_user_data.Date.values[0])
             # Record that time was not provided
             self.time_provided = False
         else:
-            # print('apples')
-            #breakpoint()
             # Add together date and time
             self.capture_Timestamp = pd.Timestamp(img_user_data.Date.values[0] + 'T' + img_user_data.Time.values[0])
             # Record time was provided
@@ -146,24 +142,13 @@ class AuroralImage():
         except Exception:
             pass
 
-    # def set_annotation(self, section, key, value):
-    #     self.annotations[section][key] = value
-    
-    # def get_annotation(self, section, key, default=None):
-    #     return self.annotations[section].get(key, default)
     def set_annotation(self, key, value):
-        # if section not in self.annotations:
-        #     self.annotations[section] = {}
-    
-        # self.annotations[section][key] = value
         self.annotations[key] = value    
     
     def get_annotation(self, key, default=None):
-        #return self.annotations.get(section, {}).get(key, default)
         return self.annotations.get(key, default)
         
-    
-    
+
     def to_flat_dict(self):
         row = {
             "filename": self.filename,
@@ -200,29 +185,8 @@ class AuroralImage():
             "SubmissionTimestamp": self.SubmissionTimestamp,
             "ProcessedTimestamp": self.ProcessedTimestamp,
             
-            # "is_night_sky": self.is_night_sky,
-            # "is_modified": self.is_modified,
-            # "is_during_storm": self.is_during_storm,
-            # "is_correct_storm": self.is_correct_storm,
-            # "needs_crop": self.needs_crop,
-            # "follow_up": self.follow_up,
-            # "setting_correct": self.setting_correct,
-            # "aurora_brightness": self.aurora_brightness,
-            # "aurora_colours": self.aurora_colours,
-            # "cloud_cover": self.cloud_cover,
-            # "aurora_shapes": self.aurora_shapes,
-            # "artifacts": self.artifacts
         }
-    
 
-    
-    
-        # for section, values in self.annotations.items():
-        #     for key, val in values.items():
-        #         if isinstance(val, set):
-        #             row[f"{key}"] = ",".join(sorted(val))
-        #         else:
-        #             row[f"{key}"] = val
         for key, val in self.annotations.items():
             if isinstance(val, set):
                 row[key] = ",".join(sorted(val))
@@ -237,16 +201,4 @@ class AuroralImage():
             
     
         return row
-
-
-    # def determine_capture_time(self):
-    #     """
-    #     Choose the best available capture timestamp.
-    #     """
-    #     if self.exif_datetime is not None:
-    #         self.capture_timestamp_file = self.exif_datetime
-    #         self.capture_source = "EXIF"
-    #     else:
-    #         self.capture_timestamp_file = self.fs_created
-    #         self.capture_source = "filesystem"
 

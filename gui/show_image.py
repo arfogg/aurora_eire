@@ -630,32 +630,19 @@ class ImageViewer(QWidget):
                    "is_correct_storm", "needs_crop", "follow_up",
                    "setting_correct"]
         # Checkboxes
-        # for k, (cb, cb_value) in enumerate(zip(cbs, cb_values)):
-        #     self.set_checkbox(
-        #         cb,
-        #         image.get_annotation("practical", cb_value, False)
-        #     )
         for cb, cb_value in zip(cbs, cb_values):
             val = image.get_annotation(cb_value, None)
-            # self.set_checkbox(cb, val is True)
             self.set_checkbox(cb, bool(val))
             
         # Scientific annotations
-        # # Checkboxes
-        # self.set_checkbox(self.aurora_present_checkbox,
-        #         image.get_annotation("scientific", "aurora_present", False)
-        #     )
-
         # Radio buttons
         brightness = image.get_annotation(
-            #"scientific",
             "aurora_brightness",
             default=None
         )
         self.set_radio_group_value(self.brightness_button, brightness)
 
         cloudy = image.get_annotation(
-            #"scientific",
             "cloud_cover",
             default=None
         )
@@ -664,7 +651,6 @@ class ImageViewer(QWidget):
         # Multiselect
         # Auroral Colours
         colours = image.get_annotation(
-            #"scientific",
             "aurora_colours",
             default=set()
         )
@@ -672,7 +658,6 @@ class ImageViewer(QWidget):
         
         # Auroral shapes
         shapes = image.get_annotation(
-            #"scientific",
             "aurora_shapes",
             default=set()
         )
@@ -680,7 +665,6 @@ class ImageViewer(QWidget):
         
         # Artifacts
         arfs = image.get_annotation(
-            #"scientific",
             "artifacts",
             default=set()
         )
@@ -695,7 +679,6 @@ class ImageViewer(QWidget):
         ex = self.images[self.index].exif_datetime
 
         text = (
-            # f"Record ID: {image.record_id}\n"
             f"File created: {fc}\n"
             f"File modified: {fm}\n"
             f"EXIF time: {ex}\n"
@@ -811,19 +794,7 @@ class ImageViewer(QWidget):
         self.images[self.index].set_reviewer(self.user_initials)
 
     def can_leave_image(self, REQUIRED_ANNOTATIONS = ["aurora_brightness", "cloud_cover"]):
-        # image = self.images[self.index]
-    
-        # for section, keys in REQUIRED_ANNOTATIONS.items():
-        #     for key in keys:
-        #         value = image.get_annotation(key, default=None)
-    
-        #         # Checkboxes → must not be None
-        #         if value is None:
-        #             return False
-    
-        #         # Radio groups → must not be None
-        #         if isinstance(value, str) and value.strip() == "":
-        #             return False
+
         image = self.images[self.index]
     
         for key in REQUIRED_ANNOTATIONS:
@@ -845,22 +816,7 @@ class ImageViewer(QWidget):
 
 
     def write_current_image_to_csv(self, image):
-        # output_csv = os.path.join(
-        #     output_data_dir,
-        #     f"annotations_{self.user_initials}.csv"
-        # )
-    
-        # row = image.to_flat_dict()
-        # df_new = pd.DataFrame([row])
-    
-        # if os.path.exists(output_csv):
-        #     df = pd.read_csv(output_csv)
-        #     df = df[df.record_id != image.record_id]
-        #     df = pd.concat([df, df_new], ignore_index=True)
-        # else:
-        #     df = df_new
-    
-        # df.to_csv(output_csv, index=False)
+
         output_csv = os.path.join(output_data_dir,
                                   f"annotations_{self.user_initials}.csv")
         
@@ -878,30 +834,6 @@ class ImageViewer(QWidget):
                 writer.writeheader()
         
             writer.writerow(row)
-
-    
-    # def write_current_image_to_csv(self, image):
-    #     # image = self.images[self.index]
-        
-    #     if image.saved:
-    #         return
-
-    #     row = image.to_flat_dict()
-    
-    #     output_csv = os.path.join(output_data_dir,
-    #                               "annotations_" + self.user_initials + ".csv")
-    
-    #     file_exists = os.path.exists(output_csv)
-    
-    #     with open(output_csv, "a", newline="", encoding="utf-8") as f:
-    #         writer = csv.DictWriter(f, fieldnames=row.keys())
-    
-    #         if not file_exists:
-    #             writer.writeheader()
-    
-    #         writer.writerow(row)
-    #     image.saved = True
-
 
 class LoginDialog(QDialog):
 
@@ -961,9 +893,6 @@ def list_images():
         img.attach_user_data(user_data_df)
 
         images.append(img)
-        # images.append(
-        #     AuroralImage(filepath=str(path), image_n=i)
-        # )
 
     return images
 
