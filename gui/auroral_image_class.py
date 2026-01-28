@@ -14,6 +14,23 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 
 
+
+ALL_ANNOTATION_KEYS = {
+    "is_night_sky",
+    "is_modified",
+    "is_during_storm",
+    "is_correct_storm",
+    "needs_crop",
+    "follow_up",
+    "setting_correct",
+    "aurora_brightness",
+    "cloud_cover",
+    "aurora_colours",
+    "aurora_shapes",
+    "artifacts",
+}
+
+
 class AuroralImage():
     """
     A class containing the information for an individual photo.
@@ -41,6 +58,10 @@ class AuroralImage():
             "scientific": {}
         }
         self.reviewer = None
+        
+        # Initialise whether the image has been reviewed
+        self.saved = False
+
         
     def set_reviewer(self, initials):
         self.reviewer = initials
@@ -192,12 +213,22 @@ class AuroralImage():
             # "artifacts": self.artifacts
         }
     
+
+    
+    
         for section, values in self.annotations.items():
             for key, val in values.items():
                 if isinstance(val, set):
                     row[f"{key}"] = ",".join(sorted(val))
                 else:
                     row[f"{key}"] = val
+
+    
+        for key in ALL_ANNOTATION_KEYS:
+            if key not in row:
+                row[key] = False
+        
+            
     
         return row
 

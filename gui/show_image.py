@@ -9,6 +9,7 @@ import os
 import sys
 import csv
 import pathlib
+import pandas as pd
 from functools import partial
 
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
@@ -39,6 +40,7 @@ ALLOWED_USERS = {
     "SJW": "Simon",
     "DMH": "Daragh"
 }
+
 
 
 class ImageWindow(QLabel):
@@ -334,7 +336,7 @@ class ImageViewer(QWidget):
             title="Are there any other artifacts partially blocking the aurora? [select none-multiple]",
             options=["None", "Stars", "Moon", "Light Pollution",
                      "Ground object (tree/car/animal)",
-                     "Sky object (e.g. plane/helicopter/UAF)"],
+                     "Sky object (e.g. plane/helicopter/UAF)", "Other"],
             section="scientific",
             key="artifacts",
             columns=4
@@ -581,7 +583,7 @@ class ImageViewer(QWidget):
             key=key,
             value=value
         )
-        self.update_buttons()
+        # self.update_buttons()
 
     def set_checkbox(self, checkbox, value):
         """
@@ -636,7 +638,8 @@ class ImageViewer(QWidget):
         #     )
         for cb, cb_value in zip(cbs, cb_values):
             val = image.get_annotation("practical", cb_value, None)
-            self.set_checkbox(cb, val is True)
+            # self.set_checkbox(cb, val is True)
+            self.set_checkbox(cb, bool(val))
             
         # Scientific annotations
         # # Checkboxes
@@ -835,24 +838,64 @@ class ImageViewer(QWidget):
     # -------------------------------------------------------
 
 
-    
+
     def write_current_image_to_csv(self, image):
-        # image = self.images[self.index]
-        row = image.to_flat_dict()
+        # output_csv = os.path.join(
+        #     output_data_dir,
+        #     f"annotations_{self.user_initials}.csv"
+        # )
     
+        # row = image.to_flat_dict()
+        # df_new = pd.DataFrame([row])
+    
+        # if os.path.exists(output_csv):
+        #     df = pd.read_csv(output_csv)
+        #     df = df[df.record_id != image.record_id]
+        #     df = pd.concat([df, df_new], ignore_index=True)
+        # else:
+        #     df = df_new
+    
+        # df.to_csv(output_csv, index=False)
         output_csv = os.path.join(output_data_dir,
-                                  "annotations_" + self.user_initials + ".csv")
-    
+                                  f"annotations_{self.user_initials}.csv")
+        
+        row = image.to_flat_dict()
         file_exists = os.path.exists(output_csv)
-    
+        
         with open(output_csv, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=row.keys())
-    
+            writer = csv.DictWriter(
+                f,
+                fieldnames=row.keys(),
+                extrasaction="ignore"
+            )
+        
             if not file_exists:
                 writer.writeheader()
-    
+        
             writer.writerow(row)
 
+    
+    # def write_current_image_to_csv(self, image):
+    #     # image = self.images[self.index]
+        
+    #     if image.saved:
+    #         return
+
+    #     row = image.to_flat_dict()
+    
+    #     output_csv = os.path.join(output_data_dir,
+    #                               "annotations_" + self.user_initials + ".csv")
+    
+    #     file_exists = os.path.exists(output_csv)
+    
+    #     with open(output_csv, "a", newline="", encoding="utf-8") as f:
+    #         writer = csv.DictWriter(f, fieldnames=row.keys())
+    
+    #         if not file_exists:
+    #             writer.writeheader()
+    
+    #         writer.writerow(row)
+    #     image.saved = True
 
 
 class LoginDialog(QDialog):
