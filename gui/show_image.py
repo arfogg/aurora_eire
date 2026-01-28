@@ -223,49 +223,49 @@ class ImageViewer(QWidget):
         # Is it the night sky
         self.is_night_sky_checkbox = QCheckBox("Is this an image of the night sky?")
         self.is_night_sky_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "is_night_sky")
+            partial(self.annotation_checkbox_changed, "is_night_sky")
         )
         self.annotations_layout.addWidget(self.is_night_sky_checkbox)    
 
         # Based on the modified vs capture time, did the user edit the photo?
         self.is_modified_checkbox = QCheckBox("Based on the modified vs capture time, did the user edit the photo?")
         self.is_modified_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "is_modified")
+            partial(self.annotation_checkbox_changed, "is_modified")
         )
         self.annotations_layout.addWidget(self.is_modified_checkbox)    
 
         # Is the input datetime during either storm?
         self.is_during_storm_checkbox = QCheckBox("Are any of the datetimes during either storm?")
         self.is_during_storm_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "is_during_storm")
+            partial(self.annotation_checkbox_changed, "is_during_storm")
         )
         self.annotations_layout.addWidget(self.is_during_storm_checkbox)    
 
         # Based on the dates, did the user select the correct storm?
         self.is_correct_storm_checkbox = QCheckBox("Based on the dates, did the user select the correct storm?")
         self.is_correct_storm_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "is_correct_storm")
+            partial(self.annotation_checkbox_changed, "is_correct_storm")
         )
         self.annotations_layout.addWidget(self.is_correct_storm_checkbox)    
 
         # Will we need to crop this (i.e. to remove someone's face, or if it's a screenshot, crop around the image)
         self.needs_crop_checkbox = QCheckBox("Will we need to crop this image? (e.g. to remove someone's face, or if it's a screenshot, crop around the image)")
         self.needs_crop_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "needs_crop")
+            partial(self.annotation_checkbox_changed, "needs_crop")
         )
         self.annotations_layout.addWidget(self.needs_crop_checkbox)    
 
         # Do we need a follow up discussion on this image        
         self.follow_up_checkbox = QCheckBox("Does this image require follow up discussion")
         self.follow_up_checkbox.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "follow_up")
+            partial(self.annotation_checkbox_changed, "follow_up")
         )
         self.annotations_layout.addWidget(self.follow_up_checkbox)    
         
         # Do we need a follow up discussion on this image        
         self.setting_correct = QCheckBox("Does the user-selected setting look correct?")
         self.setting_correct.stateChanged.connect(
-            partial(self.annotation_checkbox_changed, "practical", "setting_correct")
+            partial(self.annotation_checkbox_changed, "setting_correct")
         )
         self.annotations_layout.addWidget(self.setting_correct)    
         
@@ -288,7 +288,7 @@ class ImageViewer(QWidget):
             title="How bright are the Aurorae in this image?* [select one]",
             options=["No aurora", "Faint", "Moderate", "Bright"],
             on_change=lambda value: self.annotation_radio_changed(
-                section="scientific",
+                #section="scientific",
                 key="aurora_brightness",
                 value=value.lower()
                 )
@@ -311,7 +311,7 @@ class ImageViewer(QWidget):
             title="How much cloud cover is there?* [select one]",
             options=["No clouds", "Some cloud cover", "Completely clouded"],
             on_change=lambda value: self.annotation_radio_changed(
-                section="scientific",
+                #section="scientific",
                 key="cloud_cover",
                 value=value.lower()
             )
@@ -387,7 +387,7 @@ class ImageViewer(QWidget):
             checkbox.setChecked(value in values)
             checkbox.blockSignals(False)
 
-    def multiselect_changed(self, section, key, option, state):
+    def multiselect_changed(self, key, option, state):
         """
         Changer function for multiselect widget.
 
@@ -408,7 +408,7 @@ class ImageViewer(QWidget):
 
         """
         image = self.images[self.index]
-        current = image.get_annotation(section, key, default=set())
+        current = image.get_annotation(key, default=set())
 
         # Ensure we are working with a set
         if not isinstance(current, set):
@@ -419,7 +419,7 @@ class ImageViewer(QWidget):
         else:
             current.discard(option.lower())
     
-        image.set_annotation(section, key, current)
+        image.set_annotation(key, current)
         self.update_buttons()
 
     def add_multiselect_checkboxes(self, layout, title, options, section,
@@ -443,7 +443,7 @@ class ImageViewer(QWidget):
             cb = QCheckBox(opt)
             cb.stateChanged.connect(
                 lambda state, o=opt: self.multiselect_changed(
-                    section, key, o, state
+                    key, o, state
                 )
             )
     
@@ -455,7 +455,7 @@ class ImageViewer(QWidget):
         return checkboxes
 
     # RADIO GROUPS -------------------------------------------
-    def annotation_radio_changed(self, section, key, value):
+    def annotation_radio_changed(self, key, value):
         """
         Changer function for radio group widgets.
 
@@ -474,7 +474,7 @@ class ImageViewer(QWidget):
 
         """
         image = self.images[self.index]
-        image.set_annotation(section=section, key=key, value=value)
+        image.set_annotation( key=key, value=value)
         self.update_buttons()
 
     def set_radio_group_value(self, group, value):
@@ -557,7 +557,7 @@ class ImageViewer(QWidget):
         return group
 
     # CHECKBOXES -------------------------------------------
-    def annotation_checkbox_changed(self, section, key, state):
+    def annotation_checkbox_changed(self, key, state):
         """
         Changer function for checkbox widget.
 
@@ -579,7 +579,6 @@ class ImageViewer(QWidget):
         value = (state == Qt.Checked)
     
         image.set_annotation(
-            section=section,
             key=key,
             value=value
         )
@@ -637,7 +636,7 @@ class ImageViewer(QWidget):
         #         image.get_annotation("practical", cb_value, False)
         #     )
         for cb, cb_value in zip(cbs, cb_values):
-            val = image.get_annotation("practical", cb_value, None)
+            val = image.get_annotation(cb_value, None)
             # self.set_checkbox(cb, val is True)
             self.set_checkbox(cb, bool(val))
             
@@ -649,14 +648,14 @@ class ImageViewer(QWidget):
 
         # Radio buttons
         brightness = image.get_annotation(
-            "scientific",
+            #"scientific",
             "aurora_brightness",
             default=None
         )
         self.set_radio_group_value(self.brightness_button, brightness)
 
         cloudy = image.get_annotation(
-            "scientific",
+            #"scientific",
             "cloud_cover",
             default=None
         )
@@ -665,7 +664,7 @@ class ImageViewer(QWidget):
         # Multiselect
         # Auroral Colours
         colours = image.get_annotation(
-            "scientific",
+            #"scientific",
             "aurora_colours",
             default=set()
         )
@@ -673,7 +672,7 @@ class ImageViewer(QWidget):
         
         # Auroral shapes
         shapes = image.get_annotation(
-            "scientific",
+            #"scientific",
             "aurora_shapes",
             default=set()
         )
@@ -681,7 +680,7 @@ class ImageViewer(QWidget):
         
         # Artifacts
         arfs = image.get_annotation(
-            "scientific",
+            #"scientific",
             "artifacts",
             default=set()
         )
@@ -811,23 +810,29 @@ class ImageViewer(QWidget):
         self.update_annotations()
         self.images[self.index].set_reviewer(self.user_initials)
 
-    def can_leave_image(self, REQUIRED_ANNOTATIONS = {"scientific": [
-            "aurora_brightness", "cloud_cover", ]}):
+    def can_leave_image(self, REQUIRED_ANNOTATIONS = ["aurora_brightness", "cloud_cover"]):
+        # image = self.images[self.index]
+    
+        # for section, keys in REQUIRED_ANNOTATIONS.items():
+        #     for key in keys:
+        #         value = image.get_annotation(key, default=None)
+    
+        #         # Checkboxes → must not be None
+        #         if value is None:
+        #             return False
+    
+        #         # Radio groups → must not be None
+        #         if isinstance(value, str) and value.strip() == "":
+        #             return False
         image = self.images[self.index]
     
-        for section, keys in REQUIRED_ANNOTATIONS.items():
-            for key in keys:
-                value = image.get_annotation(section, key, default=None)
+        for key in REQUIRED_ANNOTATIONS:
+            value = image.get_annotation(key, None)
+            if value is None or value == "":
+                return False
     
-                # Checkboxes → must not be None
-                if value is None:
-                    return False
-    
-                # Radio groups → must not be None
-                if isinstance(value, str) and value.strip() == "":
-                    return False
-    
-        return True
+        return True    
+
 
     def show_incomplete_warning(self):
         QMessageBox.warning(

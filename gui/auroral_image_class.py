@@ -53,10 +53,10 @@ class AuroralImage():
         self.read_exif_datetime()
         
         # Initialise variables to contain user annotations
-        self.annotations = {
-            "practical": {},
-            "scientific": {}
-        }
+        self.annotations = {}
+        #     "practical": {},
+        #     "scientific": {}
+        # }
         self.reviewer = None
         
         # Initialise whether the image has been reviewed
@@ -151,15 +151,16 @@ class AuroralImage():
     
     # def get_annotation(self, section, key, default=None):
     #     return self.annotations[section].get(key, default)
-    def set_annotation(self, section, key, value):
-        if section not in self.annotations:
-            self.annotations[section] = {}
+    def set_annotation(self, key, value):
+        # if section not in self.annotations:
+        #     self.annotations[section] = {}
     
-        self.annotations[section][key] = value
+        # self.annotations[section][key] = value
+        self.annotations[key] = value    
     
-    
-    def get_annotation(self, section, key, default=None):
-        return self.annotations.get(section, {}).get(key, default)
+    def get_annotation(self, key, default=None):
+        #return self.annotations.get(section, {}).get(key, default)
+        return self.annotations.get(key, default)
         
     
     
@@ -216,12 +217,17 @@ class AuroralImage():
 
     
     
-        for section, values in self.annotations.items():
-            for key, val in values.items():
-                if isinstance(val, set):
-                    row[f"{key}"] = ",".join(sorted(val))
-                else:
-                    row[f"{key}"] = val
+        # for section, values in self.annotations.items():
+        #     for key, val in values.items():
+        #         if isinstance(val, set):
+        #             row[f"{key}"] = ",".join(sorted(val))
+        #         else:
+        #             row[f"{key}"] = val
+        for key, val in self.annotations.items():
+            if isinstance(val, set):
+                row[key] = ",".join(sorted(val))
+            else:
+                row[key] = val
 
     
         for key in ALL_ANNOTATION_KEYS:
