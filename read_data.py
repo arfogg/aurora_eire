@@ -36,9 +36,9 @@ def read_summary_admin_actions():
     return data, counties, n_photos
 
 
-def read_user_input_data():
+def read_user_input_data(csv_f):
 
-    csv_f = os.path.join(data_dir, "photos_data_2026-01-07.csv")
+    # csv_f = os.path.join(data_dir, "photos_data_2026-01-07.csv")
 
     user_data_df = pd.read_csv(csv_f)
 

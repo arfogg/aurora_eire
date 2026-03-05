@@ -31,6 +31,11 @@ from read_data import read_user_input_data
 image_dir = os.path.join(
     "C:"+os.sep, r"\Users\Alexandra\Documents\data\aurora_eire\test_images")
 
+user_input_csv = os.path.join(
+    "C:"+os.sep,
+    r"Users\Alexandra\Documents\irish_citizen_science_auroral_project\data",
+    "photos_data_2026-01-07.csv")
+
 output_data_dir = os.path.join(
     "C:"+os.sep,
     r"\Users\Alexandra\Documents\data\aurora_eire\pass1_annotations")
@@ -877,7 +882,7 @@ class LoginDialog(QDialog):
 
 def list_images():
 
-    user_data_df = read_user_input_data()
+    user_data_df = read_user_input_data(user_input_csv)
     
     # NEEDS TO BE MORE GENERAL FOR ALL FILETYPES
     # Automatically list PNG and JPEG images in the directory
