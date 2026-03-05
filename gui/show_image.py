@@ -22,7 +22,9 @@ from PySide6.QtCore import Qt
 
 from auroral_image_class import AuroralImage
 
-sys.path.append(r'C:\Users\Alexandra\Documents\wind_waves_akr_code\aurora_eire')
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
+# sys.path.append(r'C:\Users\Alexandra\Documents\wind_waves_akr_code\aurora_eire')
 from read_data import read_user_input_data
 
 # This is the path where you put the images
@@ -249,7 +251,7 @@ class ImageViewer(QWidget):
         self.annotations_layout.addWidget(self.is_correct_storm_checkbox)    
 
         # Will we need to crop this (i.e. to remove someone's face, or if it's a screenshot, crop around the image)
-        self.needs_crop_checkbox = QCheckBox("Will we need to crop this image? (e.g. to remove someone's face, or if it's a screenshot, crop around the image)")
+        self.needs_crop_checkbox = QCheckBox("Will we need to crop this image? (e.g. to remove someone's face/name, or if it's a screenshot, crop around the image)")
         self.needs_crop_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "needs_crop")
         )
