@@ -53,7 +53,27 @@ class AuroralImage():
         self.read_exif_datetime()
         
         # Initialise variables to contain user annotations
-        self.annotations = {}
+        # self.annotations = {}
+        # self.annotations = {key: False for key in ALL_ANNOTATION_KEYS}
+        self.annotations = {
+            # checkboxes
+            "is_night_sky": False,
+            "is_modified": False,
+            "is_during_storm": False,
+            "is_correct_storm": False,
+            "needs_crop": False,
+            "follow_up": False,
+            "setting_correct": False,
+        
+            # radio buttons
+            "aurora_brightness": None,
+            "cloud_cover": None,
+        
+            # multiselect
+            "aurora_colours": set(),
+            "aurora_shapes": set(),
+            "artifacts": set(),
+        }
 
         # Initialise name of reviewer
         self.reviewer = None
@@ -187,18 +207,25 @@ class AuroralImage():
             
         }
 
-        for key, val in self.annotations.items():
+        # for key, val in self.annotations.items():
+        #     if isinstance(val, set):
+        #         row[key] = ",".join(sorted(val))
+        #     else:
+        #         row[key] = val
+
+    
+        # for key in ALL_ANNOTATION_KEYS:
+        #     if key not in row:
+        #         row[key] = False
+        for key in ALL_ANNOTATION_KEYS:
+            val = self.annotations.get(key)
+        
             if isinstance(val, set):
                 row[key] = ",".join(sorted(val))
             else:
-                row[key] = val
-
-    
-        for key in ALL_ANNOTATION_KEYS:
-            if key not in row:
-                row[key] = False
-        
-            
+                # row[key] = val    
+                row[key] = bool(val) if isinstance(val, bool) else val
+                    
     
         return row
 

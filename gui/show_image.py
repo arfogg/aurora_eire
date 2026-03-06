@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
                                QButtonGroup, QGridLayout, QMessageBox,
                                QDialog, QLineEdit)
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QCoreApplication
 
 from auroral_image_class import AuroralImage
 
@@ -270,11 +270,11 @@ class ImageViewer(QWidget):
         self.annotations_layout.addWidget(self.follow_up_checkbox)    
         
         # Do we need a follow up discussion on this image        
-        self.setting_correct = QCheckBox("Does the user-selected setting look correct?")
-        self.setting_correct.stateChanged.connect(
+        self.setting_correct_checkbox = QCheckBox("Does the user-selected setting look correct?")
+        self.setting_correct_checkbox.stateChanged.connect(
             partial(self.annotation_checkbox_changed, "setting_correct")
         )
-        self.annotations_layout.addWidget(self.setting_correct)    
+        self.annotations_layout.addWidget(self.setting_correct_checkbox)    
         
         # Scientific Annotations
         self.scientific_title = QLabel("Scientific notes")
@@ -415,11 +415,17 @@ class ImageViewer(QWidget):
 
         """
         image = self.images[self.index]
-        current = image.get_annotation(key, default=set())
+        current = image.get_annotation(key)
 
-        # Ensure we are working with a set
-        if not isinstance(current, set):
+        if current is None:
+            current = set()
+        elif not isinstance(current, set):
             current = set(current)
+        # current = image.get_annotation(key, default=set())
+
+        # # Ensure we are working with a set
+        # if not isinstance(current, set):
+        #     current = set(current)
     
         if state == Qt.Checked:
             current.add(option.lower())
@@ -582,14 +588,28 @@ class ImageViewer(QWidget):
         None.
 
         """
-        image = self.images[self.index]
-        value = (state == Qt.Checked)
+        # print("Checkbox changed:", key, state == Qt.Checked)
+        # print(state, Qt.Checked, state==Qt.Checked)
+        # #print()
+        # image = self.images[self.index]
+        # value = (state == Qt.Checked)
     
+        # Get the checkbox widget itself
+        checkbox = getattr(self, f"{key}_checkbox")
+    
+        # Read the real state of the widget
+        value = checkbox.isChecked()
+    
+        print("Checkbox changed:", key, value)
+    
+        # Get current image
+        image = self.images[self.index]
+
         image.set_annotation(
             key=key,
             value=value
         )
-        # self.update_buttons()
+        self.update_buttons()
 
     def set_checkbox(self, checkbox, value):
         """
@@ -632,15 +652,27 @@ class ImageViewer(QWidget):
         cbs = [self.is_night_sky_checkbox, self.is_modified_checkbox,
               self.is_during_storm_checkbox, self.is_correct_storm_checkbox,
               self.needs_crop_checkbox, self.follow_up_checkbox,
-              self.setting_correct]
+              self.setting_correct_checkbox]
         cb_values = ["is_night_sky", "is_modified", "is_during_storm",
                    "is_correct_storm", "needs_crop", "follow_up",
                    "setting_correct"]
         # Checkboxes
+        
+        # for cb, cb_value in zip(cbs, cb_values):
+        #     val = image.get_annotation(cb_value, None)
+        #     self.set_checkbox(cb, bool(val))
+        
+        # for cb, cb_value in zip(cbs, cb_values):
+        #     val = image.get_annotation(cb_value, None)
+        
+        #     self.set_checkbox(cb, bool(val))
+        
+        #     # Ensure annotation dictionary matches GUI
+        #     if val is None:
+        #         image.set_annotation(cb_value, bool(val))      
         for cb, cb_value in zip(cbs, cb_values):
-            val = image.get_annotation(cb_value, None)
-            self.set_checkbox(cb, bool(val))
-            
+            val = image.get_annotation(cb_value)
+            self.set_checkbox(cb, val)
         # Scientific annotations
         # Radio buttons
         brightness = image.get_annotation(
@@ -738,6 +770,8 @@ class ImageViewer(QWidget):
         None.
 
         """
+        QCoreApplication.processEvents()
+        
         if not self.can_leave_image():
             self.show_incomplete_warning()
             return
@@ -758,6 +792,8 @@ class ImageViewer(QWidget):
         None.
 
         """
+        QCoreApplication.processEvents()
+        
         if not self.can_leave_image():
             self.show_incomplete_warning()
             return
@@ -829,7 +865,7 @@ class ImageViewer(QWidget):
         
         row = image.to_flat_dict()
         file_exists = os.path.exists(output_csv)
-        
+        print(self.images[self.index].annotations)
         with open(output_csv, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(
                 f,
