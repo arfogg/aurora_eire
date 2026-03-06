@@ -415,25 +415,43 @@ class ImageViewer(QWidget):
 
         """
         image = self.images[self.index]
-        current = image.get_annotation(key)
 
+        #print("Multiselect changed:", key, option, state)
+
+        current = image.get_annotation(key)
         if current is None:
             current = set()
-        elif not isinstance(current, set):
-            current = set(current)
-        # current = image.get_annotation(key, default=set())
-
-        # # Ensure we are working with a set
-        # if not isinstance(current, set):
-        #     current = set(current)
+            image.set_annotation(key, current)
+        #current = set(current)  # ensure it's a set
     
-        if state == Qt.Checked:
+        if state != 0:
             current.add(option.lower())
         else:
             current.discard(option.lower())
     
-        image.set_annotation(key, current)
+        #image.set_annotation(key, current)
+        #print("Current selection for", key, ":", current)
         self.update_buttons()
+        
+        # current = image.get_annotation(key)
+
+        # if current is None:
+        #     current = set()
+        # elif not isinstance(current, set):
+        #     current = set(current)
+        # # current = image.get_annotation(key, default=set())
+
+        # # # Ensure we are working with a set
+        # # if not isinstance(current, set):
+        # #     current = set(current)
+    
+        # if state == Qt.Checked:
+        #     current.add(option.lower())
+        # else:
+        #     current.discard(option.lower())
+    
+        # image.set_annotation(key, current)
+        # self.update_buttons()
 
     def add_multiselect_checkboxes(self, layout, title, options, section,
                                    key, columns=4):
@@ -454,11 +472,13 @@ class ImageViewer(QWidget):
             col = i % columns
     
             cb = QCheckBox(opt)
+            # cb.stateChanged.connect(
+            #     lambda state, o=opt: self.multiselect_changed(
+            #         key, o, state
+            #     )
+            # )
             cb.stateChanged.connect(
-                lambda state, o=opt: self.multiselect_changed(
-                    key, o, state
-                )
-            )
+                partial(self.multiselect_changed, key, opt))
     
             grid.addWidget(cb, row, col)
             checkboxes[opt.lower()] = cb
@@ -600,7 +620,7 @@ class ImageViewer(QWidget):
         # Read the real state of the widget
         value = checkbox.isChecked()
     
-        print("Checkbox changed:", key, value)
+        # print("Checkbox changed:", key, value)
     
         # Get current image
         image = self.images[self.index]
