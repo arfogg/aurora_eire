@@ -39,7 +39,6 @@ user_input_csv = os.path.join(
 output_data_dir = os.path.join(
     "C:"+os.sep,
     r"\Users\Alexandra\Documents\data\aurora_eire\pass1_annotations")
-# OUTPUT_CSV = "aurora_annotations.csv"
 
 ALLOWED_USERS = {
     "ARF": "Alexandra",
@@ -47,7 +46,6 @@ ALLOWED_USERS = {
     "SJW": "Simon",
     "DMH": "Daragh"
 }
-
 
 CSV_COLUMNS = [
     "filename",
@@ -268,7 +266,6 @@ class ImageViewer(QWidget):
         self.annotations_panel = QWidget()
         self.annotations_layout = QVBoxLayout(self.annotations_panel)
         
-        
         # PRACTICAL QUESTIONS
         self.practical_title = QLabel("Practical questions")
         self.practical_title.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -329,14 +326,7 @@ class ImageViewer(QWidget):
         self.scientific_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         self.annotations_layout.addSpacing(10)
         self.annotations_layout.addWidget(self.scientific_title)  
-        
-        # # Can we see aurora?
-        # self.aurora_present_checkbox = QCheckBox("Can you see any aurorae in this image?")
-        # self.aurora_present_checkbox.stateChanged.connect(
-        #     partial(self.annotation_checkbox_changed, "scientific", "aurora_present")
-        # )
-        # self.annotations_layout.addWidget(self.aurora_present_checkbox)    
-
+    
         # Is it faint/bright?
         self.brightness_button = self.add_radio_group(
             layout=self.annotations_layout,
@@ -442,6 +432,7 @@ class ImageViewer(QWidget):
             checkbox.setChecked(value in values)
             checkbox.blockSignals(False)
 
+
     def multiselect_changed(self, key, option, state):
         """
         Changer function for multiselect widget.
@@ -477,29 +468,8 @@ class ImageViewer(QWidget):
         else:
             current.discard(option.lower())
     
-        #image.set_annotation(key, current)
-        #print("Current selection for", key, ":", current)
         self.update_buttons()
         
-        # current = image.get_annotation(key)
-
-        # if current is None:
-        #     current = set()
-        # elif not isinstance(current, set):
-        #     current = set(current)
-        # # current = image.get_annotation(key, default=set())
-
-        # # # Ensure we are working with a set
-        # # if not isinstance(current, set):
-        # #     current = set(current)
-    
-        # if state == Qt.Checked:
-        #     current.add(option.lower())
-        # else:
-        #     current.discard(option.lower())
-    
-        # image.set_annotation(key, current)
-        # self.update_buttons()
 
     def add_multiselect_checkboxes(self, layout, title, options, section,
                                    key, columns=4):
@@ -520,11 +490,7 @@ class ImageViewer(QWidget):
             col = i % columns
     
             cb = QCheckBox(opt)
-            # cb.stateChanged.connect(
-            #     lambda state, o=opt: self.multiselect_changed(
-            #         key, o, state
-            #     )
-            # )
+
             cb.stateChanged.connect(
                 partial(self.multiselect_changed, key, opt))
     
@@ -615,7 +581,6 @@ class ImageViewer(QWidget):
         """
         # Title label
         title_label = QLabel(title)
-        #title_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(title_label)
     
         # Button group
@@ -656,20 +621,13 @@ class ImageViewer(QWidget):
         None.
 
         """
-        # print("Checkbox changed:", key, state == Qt.Checked)
-        # print(state, Qt.Checked, state==Qt.Checked)
-        # #print()
-        # image = self.images[self.index]
-        # value = (state == Qt.Checked)
-    
+
         # Get the checkbox widget itself
         checkbox = getattr(self, f"{key}_checkbox")
     
         # Read the real state of the widget
         value = checkbox.isChecked()
-    
-        # print("Checkbox changed:", key, value)
-    
+
         # Get current image
         image = self.images[self.index]
 
@@ -696,7 +654,6 @@ class ImageViewer(QWidget):
 
         """
         checkbox.blockSignals(True)
-        # checkbox.setChecked(bool(value))
         checkbox.setChecked(bool(value))
         checkbox.blockSignals(False)
     # -------------------------------------------------------
@@ -724,20 +681,7 @@ class ImageViewer(QWidget):
         cb_values = ["is_night_sky", "is_modified", "is_during_storm",
                    "is_correct_storm", "needs_crop", "follow_up",
                    "setting_correct"]
-        # Checkboxes
-        
-        # for cb, cb_value in zip(cbs, cb_values):
-        #     val = image.get_annotation(cb_value, None)
-        #     self.set_checkbox(cb, bool(val))
-        
-        # for cb, cb_value in zip(cbs, cb_values):
-        #     val = image.get_annotation(cb_value, None)
-        
-        #     self.set_checkbox(cb, bool(val))
-        
-        #     # Ensure annotation dictionary matches GUI
-        #     if val is None:
-        #         image.set_annotation(cb_value, bool(val))      
+        # Checkboxes  
         for cb, cb_value in zip(cbs, cb_values):
             val = image.get_annotation(cb_value)
             self.set_checkbox(cb, val)
@@ -829,11 +773,6 @@ class ImageViewer(QWidget):
     # -------------------------------------------------------
     # MOVE BETWEEN IMAGES
     #    
-
-
-
-
-
     def next_image(self):
         """
         Move to next image
@@ -867,10 +806,7 @@ class ImageViewer(QWidget):
         self.index += 1
         self.image_label.set_image(self.images[self.index].filepath)
         self.image_change_updates()    
-        # if self.index < (self.n_images - 1):
-        #     self.index += 1
-        #     self.image_label.set_image(self.images[self.index].filepath)
-        #     self.image_change_updates()
+
 
     def previous_image(self):
         """
@@ -949,39 +885,7 @@ class ImageViewer(QWidget):
             "Incomplete annotations",
             "Please answer all questions* before leaving this image."
         )
-    # -------------------------------------------------------
-
-
-
-    # def write_current_image_to_csv(self, image):
-    #     if image.saved:
-    #         return
-    #     output_csv = os.path.join(output_data_dir,
-    #                               f"annotations_{self.user_initials}.csv")
-        
-    #     row = image.to_flat_dict()
-    #     file_exists = os.path.exists(output_csv)
-    #     #print(self.images[self.index].annotations)
-    #     with open(output_csv, "a", newline="", encoding="utf-8") as f:
-    #         writer = csv.DictWriter(
-    #             f,
-    #             #fieldnames=row.keys(),
-    #             fieldnames=CSV_COLUMNS,
-    #             extrasaction="ignore"
-    #         )
-        
-    #         if not file_exists:
-    #             writer.writeheader()
-        
-    #         writer.writerow(row)
-    #     image.saved = True
-        
-        
-        
-        
-        
-        
-        
+    # -------------------------------------------------------       
     def write_current_image_to_csv(self, image):
 
         output_csv = os.path.join(
@@ -1000,9 +904,8 @@ class ImageViewer(QWidget):
                 writer.writerow(row)
     
             return
-    
+
         # Otherwise load existing CSV
-        # df = pd.read_csv(output_csv)
         df = pd.read_csv(output_csv, dtype=str)
     
         if image.filename in df["filename"].values:
@@ -1061,8 +964,7 @@ def list_images():
 
     user_data_df = read_user_input_data(user_input_csv)
     
-    # NEEDS TO BE MORE GENERAL FOR ALL FILETYPES
-    # Automatically list PNG and JPEG images in the directory
+    # Automatically list PNG, JPG, JPEG and HEIC images in the directory
     image_files = sorted([
         str(p) for p in pathlib.Path(image_dir).glob("*")
         if p.suffix.lower() in [".png", ".jpg", ".jpeg", ".heic"]
@@ -1160,8 +1062,6 @@ def main():
     viewer.image_label.set_image(images[start_index].filepath)
     viewer.image_change_updates()
 
-    # viewer = ImageViewer(images, user_initials=login.user_initials,
-    #     user_name=login.user_name)
     viewer.show()
 
     sys.exit(app.exec())
