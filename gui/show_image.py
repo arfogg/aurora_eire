@@ -49,6 +49,54 @@ ALLOWED_USERS = {
 }
 
 
+CSV_COLUMNS = [
+    "filename",
+    "file_extension",
+    "image_n",
+    "record_id",
+    "reviewed_by",
+
+    "file_created_time",
+    "file_modified_time",
+    "exif_datetime",
+    "file_size_in_bytes",
+
+    "user_capture_date",
+    "user_capture_time",
+    "capture_Timestamp",
+    "user_time_provided",
+    "storm_name",
+    "County",
+    "geo_lat",
+    "geo_lon",
+    "direction",
+
+    "setting",
+    "device",
+    "edited",
+    "user_comment",
+    "filesize",
+    "filetype",
+    "camera_make",
+    "camera_model",
+    "SubmissionTimestamp",
+    "ProcessedTimestamp",
+
+    # annotations
+    "is_night_sky",
+    "is_modified",
+    "is_during_storm",
+    "is_correct_storm",
+    "needs_crop",
+    "follow_up",
+    "setting_correct",
+    "aurora_brightness",
+    "cloud_cover",
+    "aurora_colours",
+    "aurora_shapes",
+    "artifacts",
+]
+
 
 class ImageWindow(QLabel):
     """
@@ -150,7 +198,7 @@ class ImageViewer(QWidget):
         self.metadata_label.setWordWrap(True)
 
         # Create a Next button
-        self.next_button = QPushButton("Next")
+        self.next_button = QPushButton("Next (saves annotations)")
         # Clicked is the signal we get from next_button
         # next_image is a method that runs when we click
         self.next_button.clicked.connect(self.next_image)
@@ -781,6 +829,11 @@ class ImageViewer(QWidget):
     # -------------------------------------------------------
     # MOVE BETWEEN IMAGES
     #    
+
+
+
+
+
     def next_image(self):
         """
         Move to next image
@@ -797,11 +850,27 @@ class ImageViewer(QWidget):
             return
     
         self.write_current_image_to_csv(self.images[self.index])
+
+        # If this is the final image
+        if self.index == self.n_images - 1:
     
-        if self.index < (self.n_images - 1):
-            self.index += 1
-            self.image_label.set_image(self.images[self.index].filepath)
-            self.image_change_updates()
+            QMessageBox.information(
+                self,
+                "Review complete",
+                "All images have now been reviewed.\nGo raibh maith agat!"
+            )
+    
+            QApplication.quit()
+            return
+    
+        # Otherwise move forward
+        self.index += 1
+        self.image_label.set_image(self.images[self.index].filepath)
+        self.image_change_updates()    
+        # if self.index < (self.n_images - 1):
+        #     self.index += 1
+        #     self.image_label.set_image(self.images[self.index].filepath)
+        #     self.image_change_updates()
 
     def previous_image(self):
         """
@@ -837,8 +906,14 @@ class ImageViewer(QWidget):
         can_move = self.can_leave_image()
     
         self.previous_button.setEnabled(self.index > 0 and can_move)
-        self.next_button.setEnabled(self.index < (self.n_images - 1) and can_move)
-
+        # self.next_button.setEnabled(self.index < (self.n_images - 1) and can_move)
+        if self.index == self.n_images - 1:
+            self.next_button.setText("Final image: Save and Finish")
+        else:
+            self.next_button.setText("Next")
+        
+        self.next_button.setEnabled(can_move)
+        self.previous_button.setEnabled(self.index > 0)
 
     def image_change_updates(self):
         """
@@ -878,25 +953,71 @@ class ImageViewer(QWidget):
 
 
 
+    # def write_current_image_to_csv(self, image):
+    #     if image.saved:
+    #         return
+    #     output_csv = os.path.join(output_data_dir,
+    #                               f"annotations_{self.user_initials}.csv")
+        
+    #     row = image.to_flat_dict()
+    #     file_exists = os.path.exists(output_csv)
+    #     #print(self.images[self.index].annotations)
+    #     with open(output_csv, "a", newline="", encoding="utf-8") as f:
+    #         writer = csv.DictWriter(
+    #             f,
+    #             #fieldnames=row.keys(),
+    #             fieldnames=CSV_COLUMNS,
+    #             extrasaction="ignore"
+    #         )
+        
+    #         if not file_exists:
+    #             writer.writeheader()
+        
+    #         writer.writerow(row)
+    #     image.saved = True
+        
+        
+        
+        
+        
+        
+        
     def write_current_image_to_csv(self, image):
 
-        output_csv = os.path.join(output_data_dir,
-                                  f"annotations_{self.user_initials}.csv")
-        
+        output_csv = os.path.join(
+            output_data_dir,
+            f"annotations_{self.user_initials}.csv"
+        )
+    
         row = image.to_flat_dict()
-        file_exists = os.path.exists(output_csv)
-        print(self.images[self.index].annotations)
-        with open(output_csv, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(
-                f,
-                fieldnames=row.keys(),
-                extrasaction="ignore"
-            )
-        
-            if not file_exists:
+    
+        # If file doesn't exist yet → create it
+        if not os.path.exists(output_csv):
+    
+            with open(output_csv, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=row.keys())
                 writer.writeheader()
-        
-            writer.writerow(row)
+                writer.writerow(row)
+    
+            return
+    
+        # Otherwise load existing CSV
+        # df = pd.read_csv(output_csv)
+        df = pd.read_csv(output_csv, dtype=str)
+    
+        if image.filename in df["filename"].values:
+    
+            # Update existing row
+            for key, val in row.items():
+                df.loc[df["filename"] == image.filename, key] = val
+    
+        else:
+    
+            # Append new row
+            df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+    
+        # Write file back
+        df.to_csv(output_csv, index=False)
 
 class LoginDialog(QDialog):
 
@@ -960,6 +1081,57 @@ def list_images():
     return images
 
 
+def load_existing_annotations(images, user_initials):
+
+    output_csv = os.path.join(
+        output_data_dir,
+        f"annotations_{user_initials}.csv"
+    )
+
+    if not os.path.exists(output_csv):
+        return 0  # start from beginning
+
+    df = pd.read_csv(output_csv)
+
+    # Map filename -> annotation row
+    rows = {row["filename"]: row for _, row in df.iterrows()}
+
+    last_completed_index = -1
+
+    for i, img in enumerate(images):
+
+        if img.filename not in rows:
+            continue
+
+        row = rows[img.filename]
+
+        for key in img.annotations.keys():
+
+            if key not in row:
+                continue
+
+            val = row[key]
+
+            # reconstruct sets
+            if key in ["aurora_colours", "aurora_shapes", "artifacts"]:
+                if pd.isna(val) or val == "":
+                    img.annotations[key] = set()
+                else:
+                    img.annotations[key] = set(val.split(","))
+
+            # booleans
+            elif isinstance(img.annotations[key], bool):
+                img.annotations[key] = bool(val)
+
+            else:
+                img.annotations[key] = val
+
+        img.saved = True
+        last_completed_index = i
+
+    return last_completed_index + 1
+
+
 def main():
     
 
@@ -971,8 +1143,25 @@ def main():
     if login.exec() != QDialog.Accepted:
         sys.exit()
 
-    viewer = ImageViewer(images, user_initials=login.user_initials,
-        user_name=login.user_name)
+    start_index = load_existing_annotations(images, login.user_initials)
+    
+    if start_index >= len(images):
+        print("You have annotated all available images. Go raibh maith agat!")
+        sys.exit()
+
+
+    viewer = ImageViewer(
+        images,
+        user_initials=login.user_initials,
+        user_name=login.user_name
+    )
+    
+    viewer.index = start_index
+    viewer.image_label.set_image(images[start_index].filepath)
+    viewer.image_change_updates()
+
+    # viewer = ImageViewer(images, user_initials=login.user_initials,
+    #     user_name=login.user_name)
     viewer.show()
 
     sys.exit(app.exec())

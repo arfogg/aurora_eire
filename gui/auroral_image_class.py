@@ -30,6 +30,21 @@ ALL_ANNOTATION_KEYS = {
     "artifacts",
 }
 
+ANNOTATION_COLUMNS = [
+    "is_night_sky",
+    "is_modified",
+    "is_during_storm",
+    "is_correct_storm",
+    "needs_crop",
+    "follow_up",
+    "setting_correct",
+    "aurora_brightness",
+    "cloud_cover",
+    "aurora_colours",
+    "aurora_shapes",
+    "artifacts",
+]
+
 
 class AuroralImage():
     """
@@ -217,7 +232,7 @@ class AuroralImage():
         # for key in ALL_ANNOTATION_KEYS:
         #     if key not in row:
         #         row[key] = False
-        for key in ALL_ANNOTATION_KEYS:
+        for key in ANNOTATION_COLUMNS:
             val = self.annotations.get(key)
         
             if isinstance(val, set):
