@@ -1065,7 +1065,7 @@ def list_images():
     # Automatically list PNG and JPEG images in the directory
     image_files = sorted([
         str(p) for p in pathlib.Path(image_dir).glob("*")
-        if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
+        if p.suffix.lower() in [".png", ".jpg", ".jpeg", ".heic"]
     ])
 
     if not image_files:
