@@ -6,6 +6,7 @@ Created on Tue Jan  6 15:28:30 2026
 """
 
 import os
+import json
 import numpy as np
 import pandas as pd
 
@@ -116,24 +117,40 @@ class AuroralImage():
         self.capture_time = img_user_data.Time.values[0]
         self.setting = img_user_data.Setting.values[0]
         self.device = img_user_data.Device.values[0]
-        # breakpoint()
+
         self.edited = True if img_user_data.Edited.values[0] == 'yes' else False
         self.user_comment = img_user_data.Comments.values[0]
         self.filesize = img_user_data.Filesize.values[0]
         self.filetype = img_user_data.MimeType.values[0]
-        # self.make_model_meta_data = img_user_data.Metadata.values[0]
-        # breakpoint()
-        if img_user_data.Metadata.values[0] == '[]':
-            self.camera_make = None
-            self.camera_model= None
+
+        raw_meta = img_user_data.Metadata.values[0]
+        # Case 1: no metadata
+        if raw_meta in (None, "[]", []):
+            metadata = {}
+        
+        # Case 2: JSON string (most cases)
+        elif isinstance(raw_meta, str):
+            try:
+                metadata = json.loads(raw_meta)
+                if not isinstance(metadata, dict):
+                    metadata = {}
+            except json.JSONDecodeError:
+                metadata = {}
+        
+        # Case 3: actual dict (rare)
+        elif isinstance(raw_meta, dict):
+            metadata = raw_meta
         else:
-            self.camera_make = img_user_data.Metadata.values[0]["camera_make"]
-            self.camera_model =img_user_data.Metadata.values[0]["camera_model"]
+            metadata = {}
+        
+        self.camera_make  = metadata.get("camera_make", None)
+        self.camera_model = metadata.get("camera_model", None)
+
         self.SubmissionTimestamp = img_user_data.SubmissionTimestamp.values[0]
         self.ProcessedTimestamp = img_user_data.ProcessedTimestamp.values[0]
 
         # Format time
-        if pd.isnull(img_user_data.Time) is True:
+        if (pd.isnull(img_user_data.Time.values[0]) is True):
             # ?? here we should consider what time of day, could be better to assume end of day
             self.capture_Timestamp = pd.Timestamp(img_user_data.Date.values[0])
             # Record that time was not provided

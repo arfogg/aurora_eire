@@ -29,12 +29,12 @@ from read_data import read_user_input_data
 
 # This is the path where you put the images
 image_dir = os.path.join(
-    "C:"+os.sep, r"\Users\Alexandra\Documents\data\aurora_eire\test_images")
+    "C:"+os.sep, r"\Users\Alexandra\Documents\data\aurora_eire\final_collected_data\with_test_images_removed\uploads\photos")
 
 user_input_csv = os.path.join(
     "C:"+os.sep,
-    r"Users\Alexandra\Documents\irish_citizen_science_auroral_project\data",
-    "photos_data_2026-01-07.csv")
+    r"Users\Alexandra\Documents\data\aurora_eire\final_collected_data\with_test_images_removed\data",
+    "photos_data_test_images_removed.csv")
 
 output_data_dir = os.path.join(
     "C:"+os.sep,
