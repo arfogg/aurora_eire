@@ -9,6 +9,7 @@ import os
 import sys
 import csv
 import pathlib
+import numpy as np
 import pandas as pd
 from functools import partial
 
@@ -369,7 +370,8 @@ class ImageViewer(QWidget):
             options=["No aurora", "Quiet Arc", "Active Arc", "Rays/Pillars",
                      "Rayed Arc/Curtain", "Bands", "Beads", "Curls", "Folds",
                      "Spiral/Cinnamon Roll", "Corona",
-                     "Westward Travelling Surge", "Enhanced Aurora"],
+                     "Westward Travelling Surge", "Enhanced Aurora",
+                     "Diffuse Aurora"],
             section="scientific",
             key="aurora_shapes",
             columns=5
@@ -761,10 +763,12 @@ class ImageViewer(QWidget):
         None.
 
         """
+        image = self.images[self.index]
         current = self.index + 1  # Going from 1 -> n_images
         total = self.n_images
         self.image_title.setText(
-            f"Image {current} / {total}\n"
+            f"Progress {current} / {total}\n"
+            + f"Image number: {image.image_n}\n"
             + f"Filename: {self.images[self.index].filename}\n"
             + f"Record ID: {self.images[self.index].record_id}")
 
@@ -980,6 +984,7 @@ def list_images():
 
         images.append(img)
 
+
     return images
 
 
@@ -1037,13 +1042,32 @@ def load_existing_annotations(images, user_initials):
 def main():
     
 
-    images = list_images()
+    all_images = list_images()
 
     app = QApplication(sys.argv)
 
     login = LoginDialog(ALLOWED_USERS)
     if login.exec() != QDialog.Accepted:
         sys.exit()
+
+
+    # Remove images based on user initials
+    third_1 = np.arange(0, 170)
+    third_2 = np.arange(171, 171 + 170) - 1
+    third_3 = np.arange(341, 511) - 1
+    if login.user_initials == "DMH":
+        indices = np.append(third_1, third_2)
+    elif login.user_initials == "SJW":
+        indices = np.append(third_2, third_3)
+    elif login.user_initials == "SAM":
+        indices = np.append(third_1, third_3)
+    elif login.user_initials == "ARF":
+        indices = np.arange(0, 510)
+    #images = images[indices]
+    images = []
+    for ind in indices:
+        images.append(all_images[ind])
+    #breakpoint()
 
     start_index = load_existing_annotations(images, login.user_initials)
     
